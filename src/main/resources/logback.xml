@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Configuration des appenders -->
+
+    <!-- Appender console avec couleurs -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>%d{HH:mm:ss.SSS} %highlight(%-5level) %cyan([%thread]) %yellow(%logger{36}) - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Appender fichier avec rotation -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/quarkus-demo.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/quarkus-demo.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>10MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>300MB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Appender pour les logs d'accès HTTP -->
+    <appender name="ACCESS_LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/access.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/access.%d{yyyy-MM-dd}.log.gz</fileNamePattern>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>100MB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Configuration des loggers par package -->
+
+    <!-- Logger pour notre application -->
+    <logger name="org.acme.demo" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </logger>
+
+    <!-- Logger pour Quarkus -->
+    <logger name="io.quarkus" level="INFO" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </logger>
+
+    <!-- Logger pour les requêtes HTTP -->
+    <logger name="org.jboss.resteasy.reactive" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </logger>
+
+    <!-- Logger pour les logs d'accès -->
+    <logger name="io.quarkus.http.access-log" level="INFO" additivity="false">
+        <appender-ref ref="ACCESS_LOG"/>
+    </logger>
+
+    <!-- Configuration du logger root -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </root>
+
+    <!-- Profils pour différents environnements -->
+    <springProfile name="dev">
+        <logger name="org.acme.demo" level="DEBUG"/>
+        <logger name="io.quarkus" level="DEBUG"/>
+    </springProfile>
+
+    <springProfile name="prod">
+        <logger name="org.acme.demo" level="INFO"/>
+        <logger name="io.quarkus" level="WARN"/>
+        <root level="WARN"/>
+    </springProfile>
+
+</configuration>
+

@@ -108,6 +108,12 @@ pids
 # Application specific
 application-local.properties
 
+# Logs Quarkus/Logback
+logs/
+*.log
+access.log*
+quarkus-demo.log*
+
 # IDE generated files
 .project
 .classpath

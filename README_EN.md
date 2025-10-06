@@ -205,6 +205,52 @@ Running tests:
 mvn test
 ```
 
+## 📊 Logging and Monitoring
+
+The project uses **Logback** for advanced log management with multiple detail levels.
+
+### Log Configuration
+
+Logs are configured in `application.properties` and `logback.xml`:
+
+- **Console**: Formatted logs with colors (INFO level)
+- **File**: `logs/quarkus-demo.log` with automatic rotation (DEBUG level)
+- **HTTP Access Logs**: `logs/access.log` to trace requests
+
+### Available Log Levels
+
+- `TRACE`: Very detailed (advanced debugging)
+- `DEBUG`: Debug information
+- `INFO`: General information (default)
+- `WARN`: Warnings
+- `ERROR`: Errors
+
+### Customizing Log Levels
+
+To temporarily change log level, modify `application.properties`:
+```properties
+# Global level
+quarkus.log.level=DEBUG
+
+# Per-package level
+quarkus.log.category."org.acme.demo".level=TRACE
+```
+
+### Generated Log Files
+
+- `logs/quarkus-demo.log`: Main application logs
+- `logs/access.log`: HTTP access logs
+- Automatic rotation (10MB max, 5 backup files)
+
+### API Call Monitoring
+
+Logs automatically trace:
+- ✅ GET/POST calls on `/messages`
+- ✅ Request and response content
+- ✅ Validation errors
+- ✅ Processing times
+- ✅ Startup/shutdown details
+
 ## 📊 Useful Endpoints
 
 - **API**: http://localhost:8080/messages
