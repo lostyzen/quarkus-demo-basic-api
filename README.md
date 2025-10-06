@@ -44,9 +44,15 @@ Pour les instructions détaillées d'installation, configuration, tests et dépl
 
 ## 🌐 API Endpoints
 
+**API REST :**
 - `GET /messages` - Récupérer tous les messages
 - `POST /messages` - Ajouter un nouveau message
-- Swagger UI disponible sur http://localhost:8080/q/swagger-ui/
+
+**Documentation et outils :**
+- **Swagger UI** : http://localhost:8080/q/swagger-ui/ (interface graphique interactive)
+- **OpenAPI spec** : http://localhost:8080/q/openapi (spécification OpenAPI en JSON)
+- **Dev UI** : http://localhost:8080/q/dev/ (uniquement en mode développement avec `mvn quarkus:dev`)
+- **Health check** : http://localhost:8080/q/health (état de l'application)
 
 ## 📄 Licence
 
