@@ -144,3 +144,6 @@ cursor/
 *.p12
 *.keystore
 *.jks
+
+# Scrapbook - Articles privés
+scrapbook/articles/

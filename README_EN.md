@@ -1,288 +1,229 @@
-# Quarkus REST API Demo
+# Quarkus Demo - Hexagonal Architecture 🏗️
 
-A simple REST API demo using Quarkus 3.8.3 with GET and POST endpoints for message management.
+> **Navigation**: [🏠 Home](README.md) | [🇫🇷 Français](README_FR.md) | [🏗️ Technical Guide](README_ARCHITECTURE_HEXAGONALE.md)
+
+A comprehensive demonstration of **transforming a simple REST API into a complete hexagonal architecture** with Quarkus 3.8.3.
 
 ## 🎯 Demo Purpose
 
-This application demonstrates:
-- How to create a simple REST API with Quarkus
-- Quarkus project configuration with Maven
-- Automated testing with RestAssured and JUnit
-- Packaging and running a Quarkus application
-- Automatic documentation with OpenAPI/Swagger
+This application concretely illustrates:
+- **Before**: Fat controller with mixed business logic
+- **After**: Hexagonal architecture with rich domain model
+- **Measurable benefits** of this transformation
+- How to **structure a project** for long-term maintainability
 
-## 🚀 Features
+## 🏗️ Implemented Hexagonal Architecture
 
-The API exposes two endpoints:
-- `GET /messages`: Retrieves the list of all messages
-- `POST /messages`: Adds a new message
+### 🎯 **Domain Layer** (Pure business core)
+```java
+// Rich entity with business logic
+public class Message {
+    public void publish() { /* business rules */ }
+    public void updateContent(String content) { /* validation */ }
+    // State transitions: DRAFT → PUBLISHED → ARCHIVED
+}
 
-Messages are stored in memory (static list) for demo simplicity.
+// Use Cases (application logic)
+@ApplicationScoped
+public class CreateMessageUseCase {
+    public Message execute(String content, String author) { /* ... */ }
+}
+```
+
+### 🔌 **Infrastructure Layer** (Adapters)
+```java
+// REST Adapter (input)
+@Path("/api/messages")
+public class MessageController {
+    // Delegates everything to Use Cases
+}
+
+// JPA Adapter (output)  
+@ApplicationScoped
+public class JpaMessageRepository implements MessageRepository {
+    // Implements domain interfaces
+}
+```
+
+## 🚀 Quick Start
+
+### 1. **Setup**
+```bash
+git clone <your-repo-url>
+cd quarkus-demo
+mvn clean compile
+```
+
+### 2. **Launch** (two options)
+```bash
+# Option 1: System Maven (recommended)
+mvn quarkus:dev
+
+# Option 2: Maven Wrapper
+.\mvnw quarkus:dev
+```
+
+### 3. **Immediate Test**
+```bash
+# Create a message
+curl -X POST http://localhost:8080/api/messages \
+  -H "Content-Type: application/json" \
+  -d '{"content":"First hexagonal architecture test","author":"Java Developer"}'
+
+# Publish the message (get ID from previous response)
+curl -X POST http://localhost:8080/api/messages/{ID}/publish
+
+# List all messages
+curl http://localhost:8080/api/messages
+```
 
 ## 📋 Prerequisites
 
 - **Java 17** or higher
-- **Maven 3.8.1** or higher
+- **Maven 3.8.2** or higher (for Quarkus 3.8.3)
 - **Git** (to clone the project)
 
-### Prerequisites verification
+### Prerequisites Verification
 ```bash
 java -version    # Should display Java 17+
-mvn -version     # Should display Maven 3.8.1+
+mvn -version     # Should display Maven 3.8.2+
 ```
 
-## 🛠️ Installation and Setup
+## 🌐 Complete REST API
 
-### 1. Clone the project
+### **Message Management**
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/messages` | List all active messages |
+| `POST` | `/api/messages` | Create new message (status: DRAFT) |
+| `PUT` | `/api/messages/{id}` | Update message content |
+| `DELETE` | `/api/messages/{id}` | Logical deletion (status: DELETED) |
+
+### **Business Actions**
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/messages/{id}/publish` | Publish message (DRAFT → PUBLISHED) |
+
+### **Advanced Filtering**
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/messages/status/{status}` | Filter by status (DRAFT, PUBLISHED, ARCHIVED, DELETED) |
+| `GET` | `/api/messages/author/{author}` | Filter by author |
+
+### **Complete Flow Example**
 ```bash
-git clone <your-repo-url>
-cd quarkus-demo
+# 1. Create a message
+POST /api/messages
+{
+  "content": "Hexagonal architecture with Quarkus",
+  "author": "Java Expert"
+}
+# Response: {"id": "abc-123", "status": "DRAFT", ...}
+
+# 2. Publish the message  
+POST /api/messages/abc-123/publish
+# Response: {"id": "abc-123", "status": "PUBLISHED", ...}
+
+# 3. Filter published messages
+GET /api/messages/status/PUBLISHED
 ```
 
-### 2. Compile the project
-```bash
-mvn clean compile
-```
+## 🧪 Testing and Validation
 
-### 3. Run tests
+### **Running Tests**
 ```bash
+# Domain unit tests (ultra-fast)
+mvn test -Dtest="*Test"
+
+# Integration tests (end-to-end)
+mvn test -Dtest="*IntegrationTest"
+
+# All tests
 mvn test
 ```
 
-### 4. Package the application
+### **Expected Results**
+- ✅ **21 tests** all passing
+- ⚡ **Domain tests**: < 0.1s (pure logic)
+- 🚀 **Use Case tests**: < 0.5s (with mocks)
+- 🏗️ **Integration tests**: < 5s (database)
+
+## 🔧 Development Tools
+
+### **Available Web Interfaces**
+- **Swagger UI**: http://localhost:8080/q/swagger-ui/
+- **Quarkus Dev UI**: http://localhost:8080/q/dev/
+- **Health Check**: http://localhost:8080/q/health
+- **OpenAPI Spec**: http://localhost:8080/q/openapi
+
+### **Live Reload**
+In `quarkus:dev` mode, modify source code and refresh your browser - changes are automatically applied!
+
+## 🏆 Demonstrated Benefits
+
+| Aspect | Before (Fat Controller) | After (Hexagonal Architecture) |
+|--------|------------------------|----------------------------------|
+| **Testing** | Slow (infrastructure required) | Ultra-fast (isolated logic) |
+| **Evolution** | Difficult (tight coupling) | Easy (interchangeable adapters) |
+| **Validation** | Scattered | Centralized in domain |
+| **Maintenance** | Complex | Clear and modular structure |
+
+## 📚 Advanced Documentation
+
+- **[🏗️ Technical Architecture Guide](README_ARCHITECTURE_HEXAGONALE.md)** - Detailed transformation analysis
+- **[🇫🇷 Documentation Française](README_FR.md)** - Guide complet en français
+- **[🏠 Main README](README.md)** - Project overview
+
+## 🎓 Illustrated Technical Concepts
+
+### **Architectural Patterns**
+- ✅ **Ports & Adapters** (Hexagonal Architecture)
+- ✅ **Dependency Inversion** (DIP)
+- ✅ **Use Cases** (Clean Architecture)
+- ✅ **Domain-Driven Design** (DDD)
+
+### **Quarkus Best Practices**
+- ✅ **Dependency Injection** with CDI
+- ✅ **Externalized Configuration**
+- ✅ **Testing** with dedicated profiles
+- ✅ **Hot Reload** in development
+- ✅ **Automatic OpenAPI** documentation
+
+### **Code Quality**
+- ✅ **Separation** of concerns
+- ✅ **Test Pyramid** (unit → integration)
+- ✅ **Centralized Business** validation
+- ✅ **Robust Error** handling
+
+## 🚨 Troubleshooting
+
+### **Maven Version Issue**
 ```bash
-mvn clean package
+# Error: "Detected Maven Version (3.8.1) is not supported"
+# Solution: Use system Maven instead of wrapper
+mvn quarkus:dev  # Instead of ./mvnw quarkus:dev
 ```
 
-## 🏃‍♂️ Running the Application
-
-### Development mode (recommended for development)
+### **Port Already in Use**
 ```bash
-mvn quarkus:dev
+# If port 8080 is occupied
+mvn quarkus:dev -Dquarkus.http.port=8081
 ```
-The application starts on http://localhost:8080 with hot-reload enabled.
 
-### Production mode (from jar)
+### **Failing Tests**
 ```bash
-java -jar target/quarkus-app/quarkus-run.jar
+# Make sure you're using the correct endpoints (/api/messages)
+# Old tests used /messages (legacy)
 ```
 
-## 🧪 API Testing
+## 📄 License and Attribution
 
-### With curl
+**MIT License** - Free to use for education and training.
 
-**Retrieve all messages:**
-```bash
-curl -X GET http://localhost:8080/messages
-```
+**Attribution required** for any reuse:
+- Author: [@lostyzen](https://github.com/lostyzen)
+- Project: Quarkus Demo - Hexagonal Architecture
 
-**Add a message:**
-```bash
-curl -X POST http://localhost:8080/messages \
-  -H "Content-Type: application/json" \
-  -d '{"content":"Hello Quarkus!"}'
-```
+---
 
-**Complete test:**
-```bash
-# 1. View empty list
-curl -X GET http://localhost:8080/messages
-
-# 2. Add a message
-curl -X POST http://localhost:8080/messages \
-  -H "Content-Type: application/json" \
-  -d '{"content":"My first message"}'
-
-# 3. View updated list
-curl -X GET http://localhost:8080/messages
-```
-
-### With Swagger UI
-Access http://localhost:8080/q/swagger-ui/ for an interactive graphical interface.
-
-## 📁 Project Structure
-
-```
-quarkus-demo/
-├── src/
-│   ├── main/
-│   │   ├── java/org/acme/demo/
-│   │   │   ├── Message.java          # Message POJO
-│   │   │   └── MessageResource.java  # REST Resource
-│   │   └── resources/
-│   │       └── application.properties # Quarkus Configuration
-│   └── test/
-│       └── java/org/acme/demo/
-│           └── MessageResourceTest.java # Integration Tests
-├── target/
-│   └── quarkus-app/
-│       └── quarkus-run.jar           # Executable Application
-├── pom.xml                           # Maven Configuration
-├── .gitignore                        # Git ignored files
-├── README.md                         # This file
-├── README_FR.md                      # French version
-└── README_EN.md                      # English version
-```
-
-## ⚙️ pom.xml Structure
-
-### Important Properties
-- **Quarkus 3.8.3**: Stable and modern version with Jakarta EE support
-- **Java 17**: LTS version required by Quarkus 3.x
-- **UTF-8**: Source and report encoding
-
-### Key Dependencies
-
-#### Production
-- `quarkus-resteasy-reactive-jackson`: REST + JSON support
-- `quarkus-smallrye-openapi`: Automatic OpenAPI/Swagger documentation
-- `quarkus-arc`: Dependency injection (CDI)
-
-#### Tests
-- `quarkus-junit5`: Quarkus testing framework
-- `rest-assured`: Simplified REST API testing
-- `hamcrest`: Matchers for test assertions
-
-### Essential Plugins
-
-#### quarkus-maven-plugin
-```xml
-<plugin>
-  <groupId>io.quarkus</groupId>
-  <artifactId>quarkus-maven-plugin</artifactId>
-  <executions>
-    <execution>
-      <goals>
-        <goal>build</goal>              <!-- Generates fast-jar -->
-        <goal>generate-code</goal>      <!-- Code generation -->
-        <goal>generate-code-tests</goal> <!-- Test generation -->
-      </goals>
-    </execution>
-  </executions>
-</plugin>
-```
-
-#### Standard Maven Plugins
-- **maven-compiler-plugin**: Java 17 compilation with preserved parameters
-- **maven-surefire-plugin**: Unit tests with Quarkus configuration
-- **maven-failsafe-plugin**: Integration tests
-
-### Critical Points for Proper Functioning
-
-1. **Correct Quarkus BOM**:
-   ```xml
-   <groupId>io.quarkus</groupId>
-   <artifactId>quarkus-bom</artifactId>
-   ```
-
-2. **Quarkus Plugin Goals**: Required to generate `target/quarkus-app/`
-
-3. **Test Configuration**: System variables required for Quarkus
-
-4. **Package Type**: `fast-jar` configured in `application.properties`
-
-## 🔧 Configuration
-
-### application.properties
-```properties
-# Package type (generates target/quarkus-app/)
-quarkus.package.type=fast-jar
-
-# OIDC configuration (example, not used in this demo)
-quarkus.oidc.auth-server-url=https://oidc.example.com/auth/realm/client
-```
-
-## 🧪 Automated Tests
-
-The project includes integration tests that:
-- Verify the message list is initially empty
-- Test message addition via POST
-- Validate message retrieval via GET
-- Use RestAssured to simulate HTTP requests
-
-Running tests:
-```bash
-mvn test
-```
-
-## 📊 Logging and Monitoring
-
-The project uses **Logback** for advanced log management with multiple detail levels.
-
-### Log Configuration
-
-Logs are configured in `application.properties` and `logback.xml`:
-
-- **Console**: Formatted logs with colors (INFO level)
-- **File**: `logs/quarkus-demo.log` with automatic rotation (DEBUG level)
-- **HTTP Access Logs**: `logs/access.log` to trace requests
-
-### Available Log Levels
-
-- `TRACE`: Very detailed (advanced debugging)
-- `DEBUG`: Debug information
-- `INFO`: General information (default)
-- `WARN`: Warnings
-- `ERROR`: Errors
-
-### Customizing Log Levels
-
-To temporarily change log level, modify `application.properties`:
-```properties
-# Global level
-quarkus.log.level=DEBUG
-
-# Per-package level
-quarkus.log.category."org.acme.demo".level=TRACE
-```
-
-### Generated Log Files
-
-- `logs/quarkus-demo.log`: Main application logs
-- `logs/access.log`: HTTP access logs
-- Automatic rotation (10MB max, 5 backup files)
-
-### API Call Monitoring
-
-Logs automatically trace:
-- ✅ GET/POST calls on `/messages`
-- ✅ Request and response content
-- ✅ Validation errors
-- ✅ Processing times
-- ✅ Startup/shutdown details
-
-## 📊 Useful Endpoints
-
-- **API**: http://localhost:8080/messages
-- **Documentation**: http://localhost:8080/q/swagger-ui/
-- **Health check**: http://localhost:8080/q/health
-- **Metrics**: http://localhost:8080/q/metrics
-
-## 🐛 Troubleshooting
-
-### quarkus-app folder is not generated
-- Check that all Maven plugins are present in pom.xml
-- Run `mvn clean package` and check error logs
-
-### Error "no main manifest attribute"
-- Don't use `target/quarkus-demo-1.0-SNAPSHOT.jar`
-- Use `target/quarkus-app/quarkus-run.jar`
-
-### Test failures
-- Check that the application is not already running on port 8080
-- Run `mvn clean test` for a clean environment
-
-### Dependency issues
-- Run `mvn clean install -U` to force dependency updates
-- Verify you're using Java 17+
-
-## 📚 Going Further
-
-- [Quarkus Documentation](https://quarkus.io/guides/)
-- [REST with Quarkus Guide](https://quarkus.io/guides/rest-json)
-- [Testing with Quarkus](https://quarkus.io/guides/getting-started-testing)
-- [RestAssured Documentation](https://rest-assured.io/)
-
-## 👥 Contributing
-
-This project serves as an educational demo. Feel free to use it as a base for your own Quarkus projects!
+*💡 This project is an educational resource to master hexagonal architecture with Quarkus and Java 17.*
