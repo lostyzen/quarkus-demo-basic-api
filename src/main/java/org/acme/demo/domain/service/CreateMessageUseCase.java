@@ -8,7 +8,7 @@ import org.acme.demo.domain.model.MessageId;
 import org.acme.demo.domain.port.out.MessageRepository;
 
 /**
- * Use Case : Création d'un nouveau message
+ * Use Case: Create a new message
  */
 @ApplicationScoped
 public class CreateMessageUseCase {
@@ -21,7 +21,7 @@ public class CreateMessageUseCase {
     }
 
     public Message execute(String content, String author) {
-        // La validation métier est déjà dans l'entité Message
+        // Business validation is already in the Message entity
         Message message = new Message(content, author);
         return messageRepository.save(message);
     }

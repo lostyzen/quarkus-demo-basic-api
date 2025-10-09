@@ -1,110 +1,98 @@
 # Quarkus Demo - Architecture Hexagonale
 
-> **Documentation**: [🇫🇷 Version Française](README_FR.md) | [🇺🇸 English Version](README_EN.md) | [🏗️ Guide Architecture](README_ARCHITECTURE_HEXAGONALE.md)
+> **🌐 Documentation multilingue**: [🇫🇷 Version Française](README_FR.md) | [🇺🇸 English Version](README_EN.md)  
+> **📚 Documentation technique**: [🏗️ Architecture Hexagonale](README_ARCHITECTURE_HEXAGONALE_FR.md) | [🏗️ Hexagonal Architecture (EN)](README_ARCHITECTURE_HEXAGONALE_EN.md)
 
 ---
 
-## 🏗️ Transformation Architecturale
+## 🎯 Présentation du Projet
 
-Ce projet démontre la **transformation d'une API REST simple vers une architecture hexagonale complète** avec Quarkus 3.8.3.
+Ce projet démontre **la transformation d'une API REST simple vers une architecture hexagonale complète** avec Quarkus 3.8.3, illustrant concrètement les bénéfices de cette approche architecturale.
 
-### ✨ **Évolution du Projet**
-- **Phase 1** : API REST basique avec controller obèse
-- **Phase 2** : **Architecture hexagonale** avec domaine métier riche
+## 🏗️ Architecture Hexagonale
 
-## 🎯 Architecture Hexagonale Implémentée
+L'architecture hexagonale (Ports & Adapters) sépare clairement :
+- **🎯 Domaine** : Logique métier pure et testable
+- **🔌 Adaptateurs** : Infrastructure technique (REST, JPA, etc.)
+- **📡 Ports** : Contrats d'interface entre domaine et infrastructure
 
-```
-🎯 Domain (Cœur métier)
-├── model/ (Entités et Value Objects)
-│   ├── Message.java (Entité riche avec logique métier)
-│   ├── MessageId.java (Value Object)
-│   └── MessageStatus.java (Enum avec transitions)
-├── service/ (Use Cases)
-│   ├── CreateMessageUseCase.java
-│   ├── PublishMessageUseCase.java
-│   ├── UpdateMessageUseCase.java
-│   └── GetMessagesUseCase.java
-└── port/out/ (Interfaces de sortie)
-    └── MessageRepository.java
+## 🚀 Démarrage Rapide
 
-🔌 Infrastructure (Adaptateurs)
-├── adapter/in/rest/ (API REST)
-│   ├── MessageController.java
-│   └── dto/ (DTOs de transport)
-└── adapter/out/persistence/ (Persistance JPA)
-    ├── MessageEntity.java
-    └── JpaMessageRepository.java
-```
-
-## 🚀 Démarrage rapide
-
-```bash
-# Cloner et compiler
-git clone <votre-repo-url>
-cd quarkus-demo
-mvn clean compile
-
-# Lancer l'application (deux options)
-mvn quarkus:dev          # Maven système
-# ou
-.\mvnw quarkus:dev       # Wrapper Maven
-
-# Tester l'API hexagonale
-curl -X GET http://localhost:8080/api/messages
-curl -X POST http://localhost:8080/api/messages \
-  -H "Content-Type: application/json" \
-  -d '{"content":"Message avec architecture hexagonale","author":"Developer"}'
-```
-
-## 📋 Prérequis
-
+### Prérequis
 - Java 17+
-- Maven 3.8.2+ (compatible avec Quarkus 3.8.3)
+- Maven 3.9+
 
-## 🌐 API Endpoints (Architecture Hexagonale)
+### Installation et Lancement
+```bash
+# Cloner le projet
+git clone <repository-url>
+cd quarkus-demo
 
-**Gestion des Messages :**
-- `GET /api/messages` - Liste tous les messages actifs
-- `POST /api/messages` - Créer un nouveau message
-- `PUT /api/messages/{id}` - Modifier le contenu
-- `POST /api/messages/{id}/publish` - Publier un message
+# Lancer l'application en mode développement
+./mvnw quarkus:dev
+```
+
+### Accès aux Interfaces
+- 🌐 **API REST** : http://localhost:8080/api/messages
+- 📊 **Swagger UI** : http://localhost:8080/q/swagger-ui
+- 🗄️ **Base H2** : Accessible via DBeaver (port 9092)
+- ❤️ **Health Check** : http://localhost:8080/q/health
+
+## 📋 Fonctionnalités
+
+### Endpoints API
+- `POST /api/messages` - Création d'un message
+- `GET /api/messages` - Liste des messages actifs
+- `POST /api/messages/{id}/publish` - Publication d'un message
+- `PUT /api/messages/{id}` - Mise à jour du contenu
 - `DELETE /api/messages/{id}` - Suppression logique
 
-**Filtrage Avancé :**
-- `GET /api/messages/status/{status}` - Filtrer par statut (DRAFT, PUBLISHED, ARCHIVED)
-- `GET /api/messages/author/{author}` - Filtrer par auteur
+### Base de Données H2
+- **Mode serveur TCP** pour accès simultané
+- **Persistance sur fichier** (./data/)
+- **Connexion DBeaver** en temps réel
 
-**Documentation et outils :**
-- **Swagger UI** : http://localhost:8080/q/swagger-ui/ (interface graphique interactive)
-- **OpenAPI spec** : http://localhost:8080/q/openapi (spécification OpenAPI en JSON)
-- **Dev UI** : http://localhost:8080/q/dev/ (uniquement en mode développement)
-- **Health check** : http://localhost:8080/q/health (état de l'application)
+## 🧪 Tests
 
-## 📚 Documentation Complète
+```bash
+# Tests unitaires (domaine)
+./mvnw test -Dtest="*Test"
 
-- **[🏗️ Guide Architecture Hexagonale](README_ARCHITECTURE_HEXAGONALE.md)** - Transformation détaillée et bienfaits
-- **[📖 Documentation en Français](README_FR.md)** - Guide complet d'utilisation
-- **[📖 English Documentation](README_EN.md)** - Complete usage guide
+# Tests d'intégration
+./mvnw test -Dtest="*IntegrationTest"
 
-## 🏆 Avantages Démontrés
+# Tous les tests
+./mvnw test
+```
 
-✅ **Tests ultra-rapides** (logique métier isolée)  
-✅ **Séparation claire** des responsabilités  
-✅ **Évolutivité** facilitée (nouveaux adaptateurs)  
-✅ **Robustesse** avec validation métier centralisée  
-✅ **Maintenabilité** à long terme  
+## 📚 Documentation Technique Détaillée
 
-## 📄 Licence
+### Français 🇫🇷
+- [📋 Guide Utilisateur Complet](README_FR.md)
+- [🏗️ Architecture Hexagonale Détaillée](README_ARCHITECTURE_HEXAGONALE_FR.md)
 
-Ce projet est distribué sous **licence MIT** - voir le fichier [LICENSE](LICENSE) pour les détails.
+### English 🇺🇸
+- [📋 Complete User Guide](README_EN.md)
+- [🏗️ Detailed Hexagonal Architecture](README_ARCHITECTURE_HEXAGONALE_EN.md)
 
-**Open source** et libre d'utilisation pour des fins éducatives, de formation et de démonstration.
+## 🎯 Objectifs Pédagogiques
 
-**Attribution requise** : Si vous réutilisez ce projet ou vous en inspirez, merci de mentionner :
-- Auteur : [@lostyzen](https://github.com/lostyzen) sur GitHub
-- Projet source : Quarkus Demo - Architecture Hexagonale
+Ce projet illustre :
+- ✅ **Séparation des responsabilités** (domaine vs infrastructure)
+- ✅ **Testabilité** (tests unitaires ultra-rapides sans I/O)
+- ✅ **Flexibilité** (changement d'infrastructure sans impact domaine)
+- ✅ **Maintenabilité** (logique métier centralisée et claire)
+
+## 🏆 Technologies Utilisées
+
+- **Quarkus 3.8.3** - Framework Java cloud-native
+- **Architecture Hexagonale** - Ports & Adapters pattern
+- **H2 Database** - Base en mémoire avec serveur TCP
+- **JPA/Hibernate** - ORM avec Panache
+- **JAX-RS** - API REST réactive
+- **OpenAPI/Swagger** - Documentation API
+- **JUnit 5** - Framework de tests
 
 ---
 
-*Ce projet sert de démo éducative pour apprendre l'architecture hexagonale avec Quarkus et les bonnes pratiques de développement.*
+**🎓 Projet éducatif** démontrant les bienfaits de l'architecture hexagonale dans un contexte Quarkus moderne.

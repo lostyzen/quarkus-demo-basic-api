@@ -1,229 +1,436 @@
-# Démo Quarkus - Architecture Hexagonale 🏗️
+# Quarkus Demo - Guide Utilisateur Complet 🇫🇷
 
-> **Navigation**: [🏠 Accueil](README.md) | [🇺🇸 English](README_EN.md) | [🏗️ Guide Technique](README_ARCHITECTURE_HEXAGONALE.md)
-
-Une démonstration complète de **transformation d'une API REST simple vers une architecture hexagonale** avec Quarkus 3.8.3.
-
-## 🎯 Objectif de la Démonstration
-
-Cette application illustre concrètement :
-- **Avant** : Controller obèse avec logique métier mélangée
-- **Après** : Architecture hexagonale avec domaine métier riche
-- Les **bienfaits mesurables** de cette transformation
-- Comment **structurer un projet** pour la maintenabilité à long terme
-
-## 🏗️ Architecture Hexagonale Implémentée
-
-### 🎯 **Couche Domaine** (Cœur métier pur)
-```java
-// Entité riche avec logique métier
-public class Message {
-    public void publish() { /* règles métier */ }
-    public void updateContent(String content) { /* validation */ }
-    // Transitions d'état : DRAFT → PUBLISHED → ARCHIVED
-}
-
-// Use Cases (logique applicative)
-@ApplicationScoped
-public class CreateMessageUseCase {
-    public Message execute(String content, String author) { /* ... */ }
-}
-```
-
-### 🔌 **Couche Infrastructure** (Adaptateurs)
-```java
-// Adaptateur REST (entrée)
-@Path("/api/messages")
-public class MessageController {
-    // Délègue tout aux Use Cases
-}
-
-// Adaptateur JPA (sortie)  
-@ApplicationScoped
-public class JpaMessageRepository implements MessageRepository {
-    // Implémente les interfaces du domaine
-}
-```
-
-## 🚀 Démarrage Rapide
-
-### 1. **Installation**
-```bash
-git clone <votre-repo-url>
-cd quarkus-demo
-mvn clean compile
-```
-
-### 2. **Lancement** (deux options)
-```bash
-# Option 1: Maven système (recommandé)
-mvn quarkus:dev
-
-# Option 2: Wrapper Maven
-.\mvnw quarkus:dev
-```
-
-### 3. **Test Immédiat**
-```bash
-# Créer un message
-curl -X POST http://localhost:8080/api/messages \
-  -H "Content-Type: application/json" \
-  -d '{"content":"Premier test architecture hexagonale","author":"Développeur Java"}'
-
-# Publier le message (récupérer l'ID de la réponse précédente)
-curl -X POST http://localhost:8080/api/messages/{ID}/publish
-
-# Voir tous les messages
-curl http://localhost:8080/api/messages
-```
-
-## 📋 Prérequis
-
-- **Java 17** ou supérieur
-- **Maven 3.8.2** ou supérieur (pour Quarkus 3.8.3)
-- **Git** (pour cloner le projet)
-
-### Vérification des Prérequis
-```bash
-java -version    # Doit afficher Java 17+
-mvn -version     # Doit afficher Maven 3.8.2+
-```
-
-## 🌐 API REST Complète
-
-### **Gestion des Messages**
-| Méthode | Endpoint | Description |
-|---------|----------|-------------|
-| `GET` | `/api/messages` | Liste tous les messages actifs |
-| `POST` | `/api/messages` | Créer un nouveau message (statut: DRAFT) |
-| `PUT` | `/api/messages/{id}` | Modifier le contenu d'un message |
-| `DELETE` | `/api/messages/{id}` | Suppression logique (statut: DELETED) |
-
-### **Actions Métier**
-| Méthode | Endpoint | Description |
-|---------|----------|-------------|
-| `POST` | `/api/messages/{id}/publish` | Publier un message (DRAFT → PUBLISHED) |
-
-### **Filtrage Avancé**
-| Méthode | Endpoint | Description |
-|---------|----------|-------------|
-| `GET` | `/api/messages/status/{status}` | Filtrer par statut (DRAFT, PUBLISHED, ARCHIVED, DELETED) |
-| `GET` | `/api/messages/author/{author}` | Filtrer par auteur |
-
-### **Exemple de Flux Complet**
-```bash
-# 1. Créer un message
-POST /api/messages
-{
-  "content": "Architecture hexagonale avec Quarkus",
-  "author": "Expert Java"
-}
-# Réponse: {"id": "abc-123", "status": "DRAFT", ...}
-
-# 2. Publier le message  
-POST /api/messages/abc-123/publish
-# Réponse: {"id": "abc-123", "status": "PUBLISHED", ...}
-
-# 3. Filtrer les messages publiés
-GET /api/messages/status/PUBLISHED
-```
-
-## 🧪 Tests et Validation
-
-### **Exécution des Tests**
-```bash
-# Tests unitaires du domaine (ultra-rapides)
-mvn test -Dtest="*Test"
-
-# Tests d'intégration (end-to-end)
-mvn test -Dtest="*IntegrationTest"
-
-# Tous les tests
-mvn test
-```
-
-### **Résultats Attendus**
-- ✅ **21 tests** qui passent tous
-- ⚡ **Tests domaine** : < 0.1s (logique pure)
-- 🚀 **Tests Use Cases** : < 0.5s (avec mocks)
-- 🏗️ **Tests intégration** : < 5s (base de données)
-
-## 🔧 Outils de Développement
-
-### **Interfaces Web Disponibles**
-- **Swagger UI** : http://localhost:8080/q/swagger-ui/
-- **Dev UI Quarkus** : http://localhost:8080/q/dev/
-- **Health Check** : http://localhost:8080/q/health
-- **OpenAPI Spec** : http://localhost:8080/q/openapi
-
-### **Live Reload**
-En mode `quarkus:dev`, modifiez le code source et rafraîchissez votre navigateur - les changements sont automatiquement appliqués !
-
-## 🏆 Bienfaits Démontrés
-
-| Aspect | Avant (Controller obèse) | Après (Architecture hexagonale) |
-|--------|-------------------------|-----------------------------------|
-| **Tests** | Lents (infrastructure requise) | Ultra-rapides (logique isolée) |
-| **Évolution** | Difficile (couplage fort) | Facile (adaptateurs interchangeables) |
-| **Validation** | Éparpillée | Centralisée dans le domaine |
-| **Maintenance** | Complexe | Structure claire et modulaire |
-
-## 📚 Documentation Avancée
-
-- **[🏗️ Guide Architecture Technique](README_ARCHITECTURE_HEXAGONALE.md)** - Analyse détaillée de la transformation
-- **[🇺🇸 English Documentation](README_EN.md)** - Complete guide in English
-- **[🏠 README Principal](README.md)** - Vue d'ensemble du projet
-
-## 🎓 Concepts Techniques Illustrés
-
-### **Patterns Architecturaux**
-- ✅ **Ports & Adaptateurs** (Architecture hexagonale)
-- ✅ **Inversion de Dépendance** (DIP)
-- ✅ **Use Cases** (Clean Architecture)
-- ✅ **Domain-Driven Design** (DDD)
-
-### **Bonnes Pratiques Quarkus**
-- ✅ **Dependency Injection** avec CDI
-- ✅ **Configuration** externalisée
-- ✅ **Tests** avec profils dédiés
-- ✅ **Hot Reload** en développement
-- ✅ **Documentation** OpenAPI automatique
-
-### **Qualité de Code**
-- ✅ **Séparation** des responsabilités
-- ✅ **Tests** pyramide (unitaire → intégration)
-- ✅ **Validation** métier centralisée
-- ✅ **Gestion d'erreurs** robuste
-
-## 🚨 Résolution de Problèmes
-
-### **Problème Maven Version**
-```bash
-# Erreur: "Detected Maven Version (3.8.1) is not supported"
-# Solution: Utiliser Maven système au lieu du wrapper
-mvn quarkus:dev  # Au lieu de ./mvnw quarkus:dev
-```
-
-### **Port déjà utilisé**
-```bash
-# Si le port 8080 est occupé
-mvn quarkus:dev -Dquarkus.http.port=8081
-```
-
-### **Tests qui échouent**
-```bash
-# Vérifier que vous utilisez les bons endpoints (/api/messages)
-# Les anciens tests utilisaient /messages (legacy)
-```
-
-## 📄 Licence et Attribution
-
-**Licence MIT** - Libre d'utilisation pour l'éducation et la formation.
-
-**Attribution requise** pour toute réutilisation :
-- Auteur : [@lostyzen](https://github.com/lostyzen)
-- Projet : Quarkus Demo - Architecture Hexagonale
+> **🌐 Autres langues**: [🇺🇸 English Version](README_EN.md) | [🏠 Retour accueil](README.md)  
+> **📚 Documentation technique**: [🏗️ Architecture Hexagonale](README_ARCHITECTURE_HEXAGONALE_FR.md)
 
 ---
 
-*💡 Ce projet est une ressource éducative pour maîtriser l'architecture hexagonale avec Quarkus et Java 17.*
+## 📖 Table des Matières
+
+1. [🎯 Vue d'ensemble](#-vue-densemble)
+2. [🚀 Installation et Configuration](#-installation-et-configuration)
+3. [🗄️ Base de Données H2 - Mode Serveur](#-base-de-données-h2---mode-serveur)
+4. [📡 API REST - Endpoints](#-api-rest---endpoints)
+5. [🧪 Tests et Qualité](#-tests-et-qualité)
+6. [🔧 Configuration Avancée](#-configuration-avancée)
+7. [🐛 Dépannage](#-dépannage)
+
+---
+
+## 🎯 Vue d'ensemble
+
+Ce projet démontre l'implémentation d'une **architecture hexagonale** avec Quarkus, transformant une API REST simple en une application maintenable et testable.
+
+### Fonctionnalités Principales
+- ✅ **API REST complète** pour gestion de messages
+- ✅ **Architecture hexagonale** (Ports & Adapters)
+- ✅ **Base de données H2** en mode serveur TCP
+- ✅ **Tests unitaires** et d'intégration
+- ✅ **Documentation OpenAPI** (Swagger)
+- ✅ **Monitoring** et health checks
+
+---
+
+## 🚀 Installation et Configuration
+
+### Prérequis Système
+```bash
+# Vérifier Java
+java -version  # Requis: Java 17+
+
+# Vérifier Maven (optionnel, wrapper inclus)
+mvn -version   # Recommandé: Maven 3.9+
+```
+
+### Installation du Projet
+```bash
+# 1. Cloner le repository
+git clone <repository-url>
+cd quarkus-demo
+
+# 2. Installer les dépendances
+./mvnw clean compile
+
+# 3. Lancer l'application
+./mvnw quarkus:dev
+```
+
+### Vérification du Démarrage
+Une fois l'application lancée, vérifiez ces endpoints :
+- 🌐 **Application** : http://localhost:8080
+- 📊 **Swagger UI** : http://localhost:8080/q/swagger-ui
+- ❤️ **Health Check** : http://localhost:8080/q/health
+- 📈 **Métriques** : http://localhost:8080/q/metrics
+
+---
+
+## 🗄️ Base de Données H2 - Mode Serveur
+
+### Configuration Avancée H2
+
+Notre application utilise **H2 en mode serveur TCP** pour permettre l'accès simultané depuis l'application et des outils externes comme DBeaver.
+
+#### Architecture de la Base H2
+```
+Quarkus Application ──────┐
+                         │
+                         ├─► H2 TCP Server (Port 9092)
+                         │       │
+DBeaver/Outils externes ─┘       │
+                                 ▼
+                         H2 Database File
+                         (./data/quarkus-demo.mv.db)
+```
+
+#### Configuration Automatique
+
+La classe `H2TcpServerManager` démarre automatiquement un serveur H2 TCP :
+
+**Fonctionnalités** :
+- ✅ **Démarrage automatique** au lancement de Quarkus
+- ✅ **Arrêt propre** à l'arrêt de l'application  
+- ✅ **Gestion des conflits** de port
+- ✅ **Persistance sur fichier** (survit aux redémarrages)
+- ✅ **Accès simultané** Quarkus + outils externes
+
+### Connexion avec DBeaver
+
+#### Installation de DBeaver
+```bash
+# Avec Scoop (Windows)
+scoop install dbeaver
+
+# Ou téléchargement manuel depuis https://dbeaver.io
+```
+
+#### Configuration de la Connexion DBeaver
+
+1. **Créer une nouvelle connexion** :
+   - Type : **H2 Server**
+   - Host : `localhost`
+   - Port : `9092`
+   - Database : `quarkus-demo`
+   - Username : `sa`
+   - Password : *(vide)*
+
+2. **URL JDBC complète** :
+   ```
+   jdbc:h2:tcp://localhost:9092/quarkus-demo
+   ```
+
+3. **Test de connexion** :
+   - Assurez-vous que Quarkus est en cours d'exécution
+   - Cliquez sur "Test Connection" dans DBeaver
+   - Vous devriez voir : ✅ "Connected"
+
+#### Requêtes SQL Utiles
+
+```sql
+-- Voir tous les messages
+SELECT * FROM message;
+
+-- Messages par statut
+SELECT * FROM message WHERE status = 'PUBLISHED';
+
+-- Messages récents
+SELECT * FROM message 
+ORDER BY created_at DESC 
+LIMIT 10;
+
+-- Supprimer un message spécifique
+DELETE FROM message WHERE id = 'uuid-du-message';
+
+-- Statistiques par statut
+SELECT status, COUNT(*) as total 
+FROM message 
+GROUP BY status;
+```
+
+### Gestion des Données
+
+#### Localisation des Fichiers
+```bash
+# Fichiers H2 créés automatiquement
+./data/quarkus-demo.mv.db      # Base principale
+./data/quarkus-demo.trace.db   # Fichier de trace (debugging)
+```
+
+#### Sauvegarde et Restauration
+```bash
+# Sauvegarde (copier les fichiers)
+cp -r ./data ./backup-$(date +%Y%m%d)
+
+# Restauration (remplacer les fichiers)
+rm -rf ./data
+cp -r ./backup-20240101 ./data
+```
+
+#### Reset Complet de la Base
+```bash
+# Arrêter Quarkus (Ctrl+C)
+rm -rf ./data
+# Relancer Quarkus - nouvelle base créée automatiquement
+./mvnw quarkus:dev
+```
+
+---
+
+## 📡 API REST - Endpoints
+
+### Messages - Gestion Complète
+
+#### Créer un Message
+```bash
+curl -X POST http://localhost:8080/api/messages \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content": "Mon premier message avec architecture hexagonale !",
+    "author": "Développeur Java"
+  }'
+```
+
+**Réponse** :
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "content": "Mon premier message...",
+  "author": "Développeur Java",
+  "status": "DRAFT",
+  "createdAt": "2025-01-15T10:30:00",
+  "updatedAt": "2025-01-15T10:30:00"
+}
+```
+
+#### Publier un Message
+```bash
+curl -X POST http://localhost:8080/api/messages/{id}/publish
+```
+
+#### Lister les Messages
+```bash
+# Tous les messages actifs
+curl http://localhost:8080/api/messages
+
+# Par statut
+curl http://localhost:8080/api/messages/status/PUBLISHED
+
+# Par auteur
+curl http://localhost:8080/api/messages/author/JohnDoe
+```
+
+#### Mettre à Jour un Message
+```bash
+curl -X PUT http://localhost:8080/api/messages/{id} \
+  -H "Content-Type: application/json" \
+  -d '{"content": "Contenu modifié"}'
+```
+
+#### Supprimer un Message (logique)
+```bash
+curl -X DELETE http://localhost:8080/api/messages/{id}
+```
+
+### Codes de Réponse HTTP
+
+| Code | Signification | Cas d'usage |
+|------|---------------|-------------|
+| `200` | OK | Récupération, mise à jour réussie |
+| `201` | Created | Message créé avec succès |
+| `204` | No Content | Suppression réussie |
+| `400` | Bad Request | Données invalides |
+| `404` | Not Found | Message inexistant |
+| `500` | Server Error | Erreur serveur |
+
+---
+
+## 🧪 Tests et Qualité
+
+### Types de Tests Implémentés
+
+#### Tests Unitaires (Ultra-rapides)
+```bash
+# Tests du domaine uniquement
+./mvnw test -Dtest="*Test"
+
+# Test spécifique
+./mvnw test -Dtest="MessageTest"
+```
+
+**Caractéristiques** :
+- ⚡ **< 10ms par test** (pas d'I/O)
+- 🎯 **Logique métier pure**
+- 🧪 **Mocks pour les dépendances**
+
+#### Tests d'Intégration
+```bash
+# Tests avec base de données
+./mvnw test -Dtest="*IntegrationTest"
+
+# Test du controller complet
+./mvnw test -Dtest="MessageControllerIntegrationTest"
+```
+
+**Caractéristiques** :
+- 🔄 **Base H2 en mémoire de test**
+- 📡 **Tests end-to-end complets**
+- 🌐 **Validation HTTP et JSON**
+
+#### Couverture de Code
+```bash
+# Génération du rapport de couverture
+./mvnw jacoco:report
+
+# Voir le rapport
+open target/site/jacoco/index.html
+```
+
+### Stratégie de Tests
+
+| Type | Couche | Objectif | Vitesse |
+|------|--------|----------|---------|
+| **Unitaire** | Domaine | Logique métier | ⚡⚡⚡ |
+| **Intégration** | Application | Comportement E2E | ⚡⚡ |
+| **Acceptance** | API | Contrat utilisateur | ⚡ |
+
+---
+
+## 🔧 Configuration Avancée
+
+### Variables d'Environnement
+
+```bash
+# Mode de développement
+export QUARKUS_PROFILE=dev
+
+# Configuration base de données
+export QUARKUS_DATASOURCE_JDBC_URL=jdbc:h2:file:./data/quarkus-demo
+export QUARKUS_DATASOURCE_USERNAME=sa
+export QUARKUS_DATASOURCE_PASSWORD=
+
+# Niveau de logs
+export QUARKUS_LOG_CONSOLE_LEVEL=DEBUG
+```
+
+### Profils de Configuration
+
+#### Développement (par défaut)
+```properties
+# application.properties
+%dev.quarkus.log.console.level=DEBUG
+%dev.quarkus.hibernate-orm.log.sql=true
+```
+
+#### Test
+```properties
+%test.quarkus.datasource.jdbc.url=jdbc:h2:mem:test
+%test.quarkus.hibernate-orm.database.generation=drop-and-create
+```
+
+#### Production
+```properties
+%prod.quarkus.log.console.level=INFO
+%prod.quarkus.hibernate-orm.database.generation=validate
+```
+
+### Paramètres H2 Personnalisables
+
+```properties
+# Port du serveur TCP H2
+h2.tcp.port=9092
+
+# Répertoire de la base
+h2.database.path=./data/quarkus-demo
+
+# Paramètres de connexion
+quarkus.datasource.jdbc.url=jdbc:h2:file:${h2.database.path};DB_CLOSE_DELAY=-1
+```
+
+---
+
+## 🐛 Dépannage
+
+### Problèmes Courants
+
+#### Port 8080 Déjà Utilisé
+```bash
+# Identifier le processus
+netstat -ano | findstr :8080
+taskkill /PID <process-id> /F
+
+# Ou changer le port Quarkus
+./mvnw quarkus:dev -Dquarkus.http.port=8081
+```
+
+#### Base H2 Verrouillée
+```bash
+# Erreur: Database may be already in use
+# Solution: Arrêter tous les processus Java
+taskkill /F /IM java.exe
+
+# Ou supprimer le fichier de lock
+rm ./data/*.lock.db
+```
+
+#### Connexion DBeaver Échouée
+```bash
+# Vérifier que Quarkus tourne
+curl http://localhost:8080/q/health
+
+# Vérifier le port H2
+netstat -ano | findstr :9092
+
+# Tester la connexion H2
+telnet localhost 9092
+```
+
+### Logs de Débogage
+
+#### Activer les Logs SQL
+```properties
+quarkus.hibernate-orm.log.sql=true
+quarkus.log.category."org.hibernate.SQL".level=DEBUG
+```
+
+#### Logs H2 Détaillés
+```properties
+quarkus.log.category."org.h2".level=DEBUG
+quarkus.log.category."org.acme.demo.infrastructure.config.H2TcpServerManager".level=DEBUG
+```
+
+### Messages d'Erreur Fréquents
+
+| Erreur | Cause | Solution |
+|--------|-------|---------|
+| `Port 8080 in use` | Application déjà lancée | Arrêter le processus existant |
+| `Database locked` | Connexion H2 active | Fermer DBeaver ou redémarrer |
+| `Connection refused :9092` | Serveur H2 TCP non démarré | Vérifier les logs de démarrage |
+| `Tests failing` | Base de test polluée | `./mvnw clean test` |
+
+---
+
+## 📞 Support et Ressources
+
+### Documentation Officielle
+- 📚 **Quarkus** : https://quarkus.io/guides/
+- 🗄️ **H2 Database** : http://h2database.com/html/main.html
+- 🏗️ **Architecture Hexagonale** : [Guide détaillé](README_ARCHITECTURE_HEXAGONALE_FR.md)
+
+### Commandes de Diagnostic
+```bash
+# Version Java
+java -version
+
+# Informations Quarkus
+./mvnw quarkus:info
+
+# État des ports
+netstat -ano | findstr "8080\|9092"
+
+# Processus Java actifs  
+jps -v
+```
+
+---
+
+**📝 Documentation maintenue par l'équipe de développement**  
+**🔄 Dernière mise à jour** : Janvier 2025

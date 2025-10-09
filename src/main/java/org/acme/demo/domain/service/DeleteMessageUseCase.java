@@ -8,7 +8,7 @@ import org.acme.demo.domain.model.MessageId;
 import org.acme.demo.domain.port.out.MessageRepository;
 
 /**
- * Use Case : Suppression d'un message
+ * Use Case: Delete a message
  */
 @ApplicationScoped
 public class DeleteMessageUseCase {
@@ -24,13 +24,13 @@ public class DeleteMessageUseCase {
         Message message = messageRepository.findById(messageId)
             .orElseThrow(() -> new MessageNotFoundException(messageId.getValue()));
 
-        // Suppression logique (changement de statut)
+        // Logical deletion (status change)
         message.delete();
         messageRepository.save(message);
     }
 
     public void executeHardDelete(MessageId messageId) {
-        // Suppression physique de la base de données
+        // Physical deletion from the database
         if (!messageRepository.findById(messageId).isPresent()) {
             throw new MessageNotFoundException(messageId.getValue());
         }

@@ -1,11 +1,12 @@
 package org.acme.demo.domain.service;
 
 import org.acme.demo.domain.model.Message;
-import org.acme.demo.domain.model.MessageId;
+import org.acme.demo.domain.model.MessageStatus;
 import org.acme.demo.domain.port.out.MessageRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -14,9 +15,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
- * Tests unitaires du Use Case CreateMessage
- * Ces tests utilisent des mocks pour isoler complètement la logique métier
- * Avantage de l'architecture hexagonale : tests rapides et sans dépendances externes
+ * Unit tests for CreateMessage Use Case
+ * These tests use mocks to completely isolate business logic
+ * Hexagonal architecture advantage: fast tests without external dependencies
  */
 class CreateMessageUseCaseTest {
 
@@ -31,57 +32,151 @@ class CreateMessageUseCaseTest {
         createMessageUseCase = new CreateMessageUseCase(messageRepository);
     }
 
-    @Test
-    @DisplayName("Création réussie d'un message")
-    void should_create_message_successfully() {
-        // Given
-        String content = "Contenu du message";
-        String author = "John Doe";
+    @Nested
+    @DisplayName("Successful Message Creation")
+    class SuccessfulMessageCreation {
 
-        Message expectedMessage = new Message(content, author);
-        when(messageRepository.save(any(Message.class))).thenReturn(expectedMessage);
+        @Test
+        @DisplayName("Should create message successfully with valid data")
+        void should_create_message_successfully() {
+            // Given
+            String content = "Test message content";
+            String author = "John Doe";
 
-        // When
-        Message result = createMessageUseCase.execute(content, author);
+            Message savedMessage = new Message(content, author);
+            when(messageRepository.save(any(Message.class))).thenReturn(savedMessage);
 
-        // Then
-        assertNotNull(result);
-        assertEquals(content, result.getContent());
-        assertEquals(author, result.getAuthor());
-        verify(messageRepository, times(1)).save(any(Message.class));
+            // When
+            Message result = createMessageUseCase.execute(content, author);
+
+            // Then
+            assertNotNull(result);
+            assertEquals(content, result.getContent());
+            assertEquals(author, result.getAuthor());
+            assertEquals(MessageStatus.DRAFT, result.getStatus());
+
+            // Verify repository interaction
+            verify(messageRepository, times(1)).save(any(Message.class));
+        }
+
+        @Test
+        @DisplayName("Should pass through repository save result")
+        void should_pass_through_repository_save_result() {
+            // Given
+            String content = "Test content";
+            String author = "Test Author";
+
+            Message expectedMessage = new Message(content, author);
+            when(messageRepository.save(any(Message.class))).thenReturn(expectedMessage);
+
+            // When
+            Message result = createMessageUseCase.execute(content, author);
+
+            // Then
+            assertSame(expectedMessage, result);
+        }
     }
 
-    @Test
-    @DisplayName("Échec création avec contenu invalide")
-    void should_fail_with_invalid_content() {
-        // Given
-        String invalidContent = "";
-        String author = "John Doe";
+    @Nested
+    @DisplayName("Invalid Input Handling")
+    class InvalidInputHandling {
 
-        // When & Then
-        IllegalArgumentException exception = assertThrows(
-            IllegalArgumentException.class,
-            () -> createMessageUseCase.execute(invalidContent, author)
-        );
+        @Test
+        @DisplayName("Should fail when content is empty")
+        void should_fail_when_content_is_empty() {
+            // Given
+            String emptyContent = "";
+            String author = "John Doe";
 
-        assertEquals("Le contenu du message ne peut pas être vide", exception.getMessage());
-        verify(messageRepository, never()).save(any(Message.class));
+            // When & Then
+            IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> createMessageUseCase.execute(emptyContent, author)
+            );
+
+            assertEquals("Message content cannot be empty", exception.getMessage());
+            verify(messageRepository, never()).save(any(Message.class));
+        }
+
+        @Test
+        @DisplayName("Should fail when author is empty")
+        void should_fail_when_author_is_empty() {
+            // Given
+            String content = "Valid content";
+            String emptyAuthor = "";
+
+            // When & Then
+            IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> createMessageUseCase.execute(content, emptyAuthor)
+            );
+
+            assertEquals("Author cannot be empty", exception.getMessage());
+            verify(messageRepository, never()).save(any(Message.class));
+        }
+
+        @Test
+        @DisplayName("Should fail when content is null")
+        void should_fail_when_content_is_null() {
+            // Given
+            String nullContent = null;
+            String author = "John Doe";
+
+            // When & Then
+            IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> createMessageUseCase.execute(nullContent, author)
+            );
+
+            assertEquals("Message content cannot be empty", exception.getMessage());
+            verify(messageRepository, never()).save(any(Message.class));
+        }
     }
 
-    @Test
-    @DisplayName("Échec création avec auteur invalide")
-    void should_fail_with_invalid_author() {
-        // Given
-        String content = "Contenu valide";
-        String invalidAuthor = null;
+    @Nested
+    @DisplayName("Repository Integration")
+    class RepositoryIntegration {
 
-        // When & Then
-        IllegalArgumentException exception = assertThrows(
-            IllegalArgumentException.class,
-            () -> createMessageUseCase.execute(content, invalidAuthor)
-        );
+        @Test
+        @DisplayName("Should delegate message creation to domain entity")
+        void should_delegate_message_creation_to_domain_entity() {
+            // Given
+            String content = "Test content";
+            String author = "Test Author";
 
-        assertEquals("L'auteur du message ne peut pas être vide", exception.getMessage());
-        verify(messageRepository, never()).save(any(Message.class));
+            when(messageRepository.save(any(Message.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+            // When
+            Message result = createMessageUseCase.execute(content, author);
+
+            // Then
+            // Verify that the message was created properly by the domain entity
+            assertEquals(content, result.getContent());
+            assertEquals(author, result.getAuthor());
+            assertEquals(MessageStatus.DRAFT, result.getStatus());
+            assertNotNull(result.getId());
+            assertNotNull(result.getCreatedAt());
+            assertNotNull(result.getUpdatedAt());
+        }
+
+        @Test
+        @DisplayName("Should call repository save with created message")
+        void should_call_repository_save_with_created_message() {
+            // Given
+            String content = "Test content";
+            String author = "Test Author";
+
+            when(messageRepository.save(any(Message.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+            // When
+            createMessageUseCase.execute(content, author);
+
+            // Then
+            verify(messageRepository).save(argThat(message ->
+                message.getContent().equals(content) &&
+                message.getAuthor().equals(author) &&
+                message.getStatus() == MessageStatus.DRAFT
+            ));
+        }
     }
 }

@@ -2,6 +2,9 @@ package org.acme.demo.infrastructure.adapter.out.persistence;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.acme.demo.domain.model.Message;
 import org.acme.demo.domain.model.MessageId;
 import org.acme.demo.domain.model.MessageStatus;
@@ -9,11 +12,15 @@ import org.acme.demo.domain.model.MessageStatus;
 import java.time.LocalDateTime;
 
 /**
- * Entité JPA pour la persistance des messages
- * Cette classe fait partie de la couche infrastructure
+ * JPA entity for message persistence
+ * This class is part of the infrastructure layer
+ * Uses Lombok to reduce boilerplate code
  */
 @Entity
 @Table(name = "messages")
+@Data
+@NoArgsConstructor
+@EqualsAndHashCode(callSuper = false)
 public class MessageEntity extends PanacheEntityBase {
 
     @Id
@@ -36,10 +43,13 @@ public class MessageEntity extends PanacheEntityBase {
     @Column(name = "updated_at", nullable = false)
     public LocalDateTime updatedAt;
 
-    // Constructeur par défaut pour JPA
-    public MessageEntity() {}
+    @Column(name = "published_at")
+    public LocalDateTime publishedAt; // Nullable because DRAFT messages don't have publication date
 
-    // Constructeur depuis le modèle de domaine
+    @Column(name = "deleted_at")
+    public LocalDateTime deletedAt; // Nullable because non-deleted messages don't have deletion date
+
+    // Constructor from domain model
     public MessageEntity(Message message) {
         this.id = message.getId().getValue();
         this.content = message.getContent();
@@ -47,9 +57,11 @@ public class MessageEntity extends PanacheEntityBase {
         this.author = message.getAuthor();
         this.createdAt = message.getCreatedAt();
         this.updatedAt = message.getUpdatedAt();
+        this.publishedAt = message.getPublishedAt();
+        this.deletedAt = message.getDeletedAt();
     }
 
-    // Conversion vers le modèle de domaine
+    // Convert to domain model
     public Message toDomainModel() {
         return new Message(
             MessageId.of(this.id),
@@ -57,15 +69,19 @@ public class MessageEntity extends PanacheEntityBase {
             this.status,
             this.author,
             this.createdAt,
-            this.updatedAt
+            this.updatedAt,
+            this.publishedAt,
+            this.deletedAt
         );
     }
 
-    // Mise à jour depuis le modèle de domaine
+    // Update from domain model
     public void updateFromDomainModel(Message message) {
         this.content = message.getContent();
         this.status = message.getStatus();
         this.author = message.getAuthor();
         this.updatedAt = message.getUpdatedAt();
+        this.publishedAt = message.getPublishedAt();
+        this.deletedAt = message.getDeletedAt();
     }
 }

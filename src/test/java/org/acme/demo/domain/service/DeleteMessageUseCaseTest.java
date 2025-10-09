@@ -19,29 +19,29 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
- * Unit tests for PublishMessage Use Case
- * Tests the business logic for publishing messages with proper isolation
+ * Unit tests for DeleteMessage Use Case
+ * Tests logical deletion functionality with proper business rule validation
  */
-class PublishMessageUseCaseTest {
+class DeleteMessageUseCaseTest {
 
     @Mock
     private MessageRepository messageRepository;
 
-    private PublishMessageUseCase publishMessageUseCase;
+    private DeleteMessageUseCase deleteMessageUseCase;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        publishMessageUseCase = new PublishMessageUseCase(messageRepository);
+        deleteMessageUseCase = new DeleteMessageUseCase(messageRepository);
     }
 
     @Nested
-    @DisplayName("Successful Message Publishing")
-    class SuccessfulMessagePublishing {
+    @DisplayName("Successful Message Deletion")
+    class SuccessfulMessageDeletion {
 
         @Test
-        @DisplayName("Should publish draft message successfully")
-        void should_publish_draft_message_successfully() {
+        @DisplayName("Should delete draft message successfully")
+        void should_delete_draft_message_successfully() {
             // Given
             MessageId messageId = MessageId.of("test-id");
             Message draftMessage = new Message("Test content", "John Doe");
@@ -50,34 +50,55 @@ class PublishMessageUseCaseTest {
             when(messageRepository.save(any(Message.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
             // When
-            Message result = publishMessageUseCase.execute(messageId);
+            deleteMessageUseCase.execute(messageId);
 
             // Then
-            assertNotNull(result);
-            assertEquals(MessageStatus.PUBLISHED, result.getStatus());
-            // Note: publishedAt field doesn't exist in current implementation
-
+            assertEquals(MessageStatus.DELETED, draftMessage.getStatus());
             verify(messageRepository).findById(messageId);
             verify(messageRepository).save(draftMessage);
         }
 
         @Test
-        @DisplayName("Should return updated message from repository")
-        void should_return_updated_message_from_repository() {
+        @DisplayName("Should delete published message successfully")
+        void should_delete_published_message_successfully() {
             // Given
             MessageId messageId = MessageId.of("test-id");
-            Message draftMessage = new Message("Test content", "John Doe");
-            Message savedMessage = new Message("Test content", "John Doe");
-            savedMessage.publish();
+            Message publishedMessage = new Message("Test content", "John Doe");
+            publishedMessage.publish();
 
-            when(messageRepository.findById(messageId)).thenReturn(Optional.of(draftMessage));
-            when(messageRepository.save(any(Message.class))).thenReturn(savedMessage);
+            when(messageRepository.findById(messageId)).thenReturn(Optional.of(publishedMessage));
+            when(messageRepository.save(any(Message.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
             // When
-            Message result = publishMessageUseCase.execute(messageId);
+            deleteMessageUseCase.execute(messageId);
 
             // Then
-            assertSame(savedMessage, result);
+            assertEquals(MessageStatus.DELETED, publishedMessage.getStatus());
+        }
+
+        @Test
+        @DisplayName("Should perform logical deletion not physical")
+        void should_perform_logical_deletion_not_physical() {
+            // Given
+            MessageId messageId = MessageId.of("test-id");
+            Message message = new Message("Test content", "John Doe");
+            var originalId = message.getId();
+            var originalContent = message.getContent();
+
+            when(messageRepository.findById(messageId)).thenReturn(Optional.of(message));
+            when(messageRepository.save(any(Message.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+            // When
+            deleteMessageUseCase.execute(messageId);
+
+            // Then
+            // Message still exists with same identity and content
+            assertEquals(originalId, message.getId());
+            assertEquals(originalContent, message.getContent());
+            assertEquals(MessageStatus.DELETED, message.getStatus());
+
+            // Verify no physical deletion was attempted
+            verify(messageRepository, never()).deleteById(any(MessageId.class));
         }
     }
 
@@ -95,7 +116,7 @@ class PublishMessageUseCaseTest {
             // When & Then
             MessageNotFoundException exception = assertThrows(
                 MessageNotFoundException.class,
-                () -> publishMessageUseCase.execute(messageId)
+                () -> deleteMessageUseCase.execute(messageId)
             );
 
             assertEquals("non-existent-id", exception.getMessage());
@@ -109,40 +130,19 @@ class PublishMessageUseCaseTest {
     class InvalidStateTransitions {
 
         @Test
-        @DisplayName("Should fail to publish already published message")
-        void should_fail_to_publish_already_published_message() {
-            // Given
-            MessageId messageId = MessageId.of("test-id");
-            Message publishedMessage = new Message("Test content", "John Doe");
-            publishedMessage.publish(); // Already published
-
-            when(messageRepository.findById(messageId)).thenReturn(Optional.of(publishedMessage));
-
-            // When & Then
-            IllegalStateException exception = assertThrows(
-                IllegalStateException.class,
-                () -> publishMessageUseCase.execute(messageId)
-            );
-
-            assertTrue(exception.getMessage().contains("Cannot transition"));
-            verify(messageRepository).findById(messageId);
-            verify(messageRepository, never()).save(any(Message.class));
-        }
-
-        @Test
-        @DisplayName("Should fail to publish deleted message")
-        void should_fail_to_publish_deleted_message() {
+        @DisplayName("Should fail to delete already deleted message")
+        void should_fail_to_delete_already_deleted_message() {
             // Given
             MessageId messageId = MessageId.of("test-id");
             Message deletedMessage = new Message("Test content", "John Doe");
-            deletedMessage.delete(); // Deleted message
+            deletedMessage.delete(); // Already deleted
 
             when(messageRepository.findById(messageId)).thenReturn(Optional.of(deletedMessage));
 
             // When & Then
             IllegalStateException exception = assertThrows(
                 IllegalStateException.class,
-                () -> publishMessageUseCase.execute(messageId)
+                () -> deleteMessageUseCase.execute(messageId)
             );
 
             assertTrue(exception.getMessage().contains("Cannot transition"));
@@ -156,8 +156,8 @@ class PublishMessageUseCaseTest {
     class BusinessLogicDelegation {
 
         @Test
-        @DisplayName("Should delegate publishing logic to domain entity")
-        void should_delegate_publishing_logic_to_domain_entity() {
+        @DisplayName("Should delegate deletion logic to domain entity")
+        void should_delegate_deletion_logic_to_domain_entity() {
             // Given
             MessageId messageId = MessageId.of("test-id");
             Message message = spy(new Message("Test content", "John Doe"));
@@ -166,32 +166,35 @@ class PublishMessageUseCaseTest {
             when(messageRepository.save(any(Message.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
             // When
-            publishMessageUseCase.execute(messageId);
+            deleteMessageUseCase.execute(messageId);
 
             // Then
-            verify(message).publish(); // Verify domain method was called
+            verify(message).delete(); // Verify domain method was called
         }
 
         @Test
-        @DisplayName("Should preserve message identity and timestamps")
-        void should_preserve_message_identity_and_timestamps() {
+        @DisplayName("Should preserve all message data except status")
+        void should_preserve_all_message_data_except_status() {
             // Given
             MessageId messageId = MessageId.of("test-id");
             Message originalMessage = new Message("Test content", "John Doe");
             var originalId = originalMessage.getId();
+            var originalContent = originalMessage.getContent();
+            var originalAuthor = originalMessage.getAuthor();
             var originalCreatedAt = originalMessage.getCreatedAt();
 
             when(messageRepository.findById(messageId)).thenReturn(Optional.of(originalMessage));
             when(messageRepository.save(any(Message.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
             // When
-            Message result = publishMessageUseCase.execute(messageId);
+            deleteMessageUseCase.execute(messageId);
 
             // Then
-            assertEquals(originalId, result.getId());
-            assertEquals(originalCreatedAt, result.getCreatedAt());
-            assertEquals("Test content", result.getContent());
-            assertEquals("John Doe", result.getAuthor());
+            assertEquals(originalId, originalMessage.getId());
+            assertEquals(originalContent, originalMessage.getContent());
+            assertEquals(originalAuthor, originalMessage.getAuthor());
+            assertEquals(originalCreatedAt, originalMessage.getCreatedAt());
+            assertEquals(MessageStatus.DELETED, originalMessage.getStatus());
         }
     }
 }

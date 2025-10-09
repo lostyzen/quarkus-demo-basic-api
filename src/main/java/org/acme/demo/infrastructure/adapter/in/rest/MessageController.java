@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import lombok.extern.slf4j.Slf4j;
 import org.acme.demo.domain.exception.MessageNotFoundException;
 import org.acme.demo.domain.model.Message;
 import org.acme.demo.domain.model.MessageId;
@@ -20,13 +21,14 @@ import java.util.List;
 import java.util.logging.Logger;
 
 /**
- * Adaptateur REST (Adapter In) utilisant les Use Cases du domaine
- * Ce contrôleur ne contient AUCUNE logique métier - tout est délégué aux Use Cases
+ * REST Adapter (Adapter In) using domain Use Cases
+ * This controller contains NO business logic - everything is delegated to Use Cases
+ * Uses Lombok for reducing boilerplate code
  */
 @Path("/api/messages")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Tag(name = "Messages", description = "API de gestion des messages avec architecture hexagonale")
+@Tag(name = "Messages", description = "Message management API with hexagonal architecture")
 public class MessageController {
 
     private static final Logger LOG = Logger.getLogger(MessageController.class.getName());
@@ -51,7 +53,7 @@ public class MessageController {
     }
 
     @GET
-    @Operation(summary = "Récupère tous les messages actifs")
+    @Operation(summary = "Retrieve all active messages")
     public List<MessageDto> getAllMessages() {
         LOG.info("GET /api/messages - Retrieving all active messages");
 
@@ -66,7 +68,7 @@ public class MessageController {
 
     @GET
     @Path("/status/{status}")
-    @Operation(summary = "Récupère les messages par statut")
+    @Operation(summary = "Retrieve messages by status")
     public List<MessageDto> getMessagesByStatus(@PathParam("status") String status) {
         LOG.info("GET /api/messages/status/" + status);
 
@@ -83,7 +85,7 @@ public class MessageController {
 
     @GET
     @Path("/author/{author}")
-    @Operation(summary = "Récupère les messages par auteur")
+    @Operation(summary = "Retrieve messages by author")
     public List<MessageDto> getMessagesByAuthor(@PathParam("author") String author) {
         LOG.info("GET /api/messages/author/" + author);
 
@@ -94,33 +96,39 @@ public class MessageController {
     }
 
     @POST
-    @Operation(summary = "Crée un nouveau message")
+    @Operation(summary = "Create a new message")
     public Response createMessage(@Valid CreateMessageRequest request) {
         LOG.info("POST /api/messages - Creating new message");
         LOG.fine("Author: " + request.getAuthor() + ", Content: " + request.getContent());
 
         try {
-            Message message = createMessageUseCase.execute(request.getContent(), request.getAuthor());
-            MessageDto responseDto = new MessageDto(message);
+            Message message = createMessageUseCase.execute(
+                request.getContent().trim(),
+                request.getAuthor().trim()
+            );
 
+            MessageDto response = new MessageDto(message);
             LOG.info("POST /api/messages - Message created successfully, ID: " + message.getId().getValue());
-            return Response.status(Response.Status.CREATED).entity(responseDto).build();
+
+            return Response.status(Response.Status.CREATED)
+                    .entity(response)
+                    .build();
 
         } catch (IllegalArgumentException e) {
-            LOG.warning("POST /api/messages - Validation error: " + e.getMessage());
+            LOG.warning("POST /api/messages - Invalid input: " + e.getMessage());
             throw new BadRequestException(e.getMessage());
         }
     }
 
     @PUT
     @Path("/{id}")
-    @Operation(summary = "Met à jour le contenu d'un message")
+    @Operation(summary = "Update message content")
     public MessageDto updateMessage(@PathParam("id") String id, @Valid UpdateMessageRequest request) {
         LOG.info("PUT /api/messages/" + id + " - Updating message content");
 
         try {
             MessageId messageId = MessageId.of(id);
-            Message message = updateMessageUseCase.execute(messageId, request.getContent());
+            Message message = updateMessageUseCase.execute(messageId, request.getContent().trim());
 
             LOG.info("PUT /api/messages/" + id + " - Message updated successfully");
             return new MessageDto(message);
@@ -136,7 +144,7 @@ public class MessageController {
 
     @POST
     @Path("/{id}/publish")
-    @Operation(summary = "Publie un message")
+    @Operation(summary = "Publish a message")
     public MessageDto publishMessage(@PathParam("id") String id) {
         LOG.info("POST /api/messages/" + id + "/publish - Publishing message");
 
@@ -158,7 +166,7 @@ public class MessageController {
 
     @DELETE
     @Path("/{id}")
-    @Operation(summary = "Supprime logiquement un message")
+    @Operation(summary = "Logically delete a message")
     public Response deleteMessage(@PathParam("id") String id) {
         LOG.info("DELETE /api/messages/" + id + " - Logical deletion of message");
 

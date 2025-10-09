@@ -3,29 +3,21 @@ package org.acme.demo.infrastructure.adapter.in.rest.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
- * DTO pour la mise à jour du contenu d'un message via l'API REST
+ * DTO for updating message content via REST API
+ * Uses Lombok to reduce boilerplate code
  */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class UpdateMessageRequest {
 
     @JsonProperty("content")
-    @NotBlank(message = "Le contenu ne peut pas être vide")
-    @Size(max = 1000, message = "Le contenu ne peut pas dépasser 1000 caractères")
+    @NotBlank(message = "Content cannot be empty")
+    @Size(max = 1000, message = "Content cannot exceed 1000 characters")
     private String content;
-
-    // Constructeur par défaut pour Jackson
-    public UpdateMessageRequest() {}
-
-    public UpdateMessageRequest(String content) {
-        this.content = content;
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    public void setContent(String content) {
-        this.content = content;
-    }
 }

@@ -1,14 +1,20 @@
 package org.acme.demo.infrastructure.adapter.in.rest.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.acme.demo.domain.model.Message;
 import org.acme.demo.domain.model.MessageStatus;
 
 import java.time.LocalDateTime;
 
 /**
- * DTO pour la représentation REST d'un message
+ * DTO for REST representation of a message
+ * Uses Lombok to reduce boilerplate code
  */
+@Data
+@NoArgsConstructor
 public class MessageDto {
 
     @JsonProperty("id")
@@ -29,10 +35,15 @@ public class MessageDto {
     @JsonProperty("updatedAt")
     private LocalDateTime updatedAt;
 
-    // Constructeur par défaut pour Jackson
-    public MessageDto() {}
+    @JsonProperty("publishedAt")
+    @JsonInclude(JsonInclude.Include.NON_NULL) // Include only if non-null
+    private LocalDateTime publishedAt;
 
-    // Constructeur depuis le modèle de domaine
+    @JsonProperty("deletedAt")
+    @JsonInclude(JsonInclude.Include.NON_NULL) // Include only if non-null
+    private LocalDateTime deletedAt;
+
+    // Constructor from domain model
     public MessageDto(Message message) {
         this.id = message.getId().getValue();
         this.content = message.getContent();
@@ -40,54 +51,7 @@ public class MessageDto {
         this.author = message.getAuthor();
         this.createdAt = message.getCreatedAt();
         this.updatedAt = message.getUpdatedAt();
-    }
-
-    // Getters et setters
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    public void setContent(String content) {
-        this.content = content;
-    }
-
-    public MessageStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(MessageStatus status) {
-        this.status = status;
-    }
-
-    public String getAuthor() {
-        return author;
-    }
-
-    public void setAuthor(String author) {
-        this.author = author;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
+        this.publishedAt = message.getPublishedAt();
+        this.deletedAt = message.getDeletedAt();
     }
 }

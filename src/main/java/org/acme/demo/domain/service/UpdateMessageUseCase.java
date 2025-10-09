@@ -8,7 +8,7 @@ import org.acme.demo.domain.model.MessageId;
 import org.acme.demo.domain.port.out.MessageRepository;
 
 /**
- * Use Case : Modification du contenu d'un message
+ * Use Case: Update message content
  */
 @ApplicationScoped
 public class UpdateMessageUseCase {
@@ -24,7 +24,7 @@ public class UpdateMessageUseCase {
         Message message = messageRepository.findById(messageId)
             .orElseThrow(() -> new MessageNotFoundException(messageId.getValue()));
 
-        // La validation métier est dans l'entité
+        // Business validation is in the entity
         message.updateContent(newContent);
 
         return messageRepository.save(message);

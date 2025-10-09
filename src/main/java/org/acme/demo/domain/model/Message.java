@@ -1,95 +1,116 @@
 package org.acme.demo.domain.model;
 
+import lombok.Getter;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
 /**
- * Entité métier Message avec sa logique business
+ * Business entity Message with business logic
+ * Uses Lombok @Getter to reduce boilerplate code while preserving immutability
  */
+@Getter
 public class Message {
     private final MessageId id;
     private String content;
     private MessageStatus status;
     private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private LocalDateTime publishedAt;
+    private LocalDateTime deletedAt;
     private String author;
 
-    // Constructeur pour création d'un nouveau message
+    // Constructor for creating a new message
     public Message(String content, String author) {
-        this(MessageId.generate(), content, MessageStatus.DRAFT, author, LocalDateTime.now(), LocalDateTime.now());
+        this(MessageId.generate(), content, MessageStatus.DRAFT, author, LocalDateTime.now(), LocalDateTime.now(), null, null);
     }
 
-    // Constructeur complet (pour reconstruction depuis la persistance)
+    // Complete constructor (for reconstruction from persistence)
     public Message(MessageId id, String content, MessageStatus status, String author,
                    LocalDateTime createdAt, LocalDateTime updatedAt) {
-        this.id = Objects.requireNonNull(id, "L'ID ne peut pas être null");
-        this.createdAt = Objects.requireNonNull(createdAt, "La date de création ne peut pas être null");
-        this.updatedAt = Objects.requireNonNull(updatedAt, "La date de mise à jour ne peut pas être null");
+        this(id, content, status, author, createdAt, updatedAt, null, null);
+    }
+
+    // Complete constructor with publishedAt (for reconstruction from persistence)
+    public Message(MessageId id, String content, MessageStatus status, String author,
+                   LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime publishedAt) {
+        this(id, content, status, author, createdAt, updatedAt, publishedAt, null);
+    }
+
+    // Complete constructor with publishedAt and deletedAt (for reconstruction from persistence)
+    public Message(MessageId id, String content, MessageStatus status, String author,
+                   LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime publishedAt, LocalDateTime deletedAt) {
+        this.id = Objects.requireNonNull(id, "ID cannot be null");
+        this.createdAt = Objects.requireNonNull(createdAt, "Creation date cannot be null");
+        this.updatedAt = Objects.requireNonNull(updatedAt, "Update date cannot be null");
+        this.publishedAt = publishedAt; // Can be null for non-published messages
+        this.deletedAt = deletedAt; // Can be null for non-deleted messages
 
         this.setContent(content);
         this.setAuthor(author);
-        this.status = Objects.requireNonNull(status, "Le statut ne peut pas être null");
+        this.status = Objects.requireNonNull(status, "Status cannot be null");
     }
 
-    // Logique métier : publication d'un message
+    // Business logic: publish a message
     public void publish() {
         if (!status.canTransitionTo(MessageStatus.PUBLISHED)) {
             throw new IllegalStateException(
-                "Impossible de publier un message avec le statut : " + status.getDisplayName());
+                "Cannot transition from " + status.getDisplayName() + " to PUBLISHED");
         }
         this.status = MessageStatus.PUBLISHED;
+        this.publishedAt = LocalDateTime.now(); // Set publication timestamp
         this.updatedAt = LocalDateTime.now();
     }
 
-    // Logique métier : archivage d'un message
+    // Business logic: archive a message
     public void archive() {
         if (!status.canTransitionTo(MessageStatus.ARCHIVED)) {
             throw new IllegalStateException(
-                "Impossible d'archiver un message avec le statut : " + status.getDisplayName());
+                "Cannot transition from " + status.getDisplayName() + " to ARCHIVED");
         }
         this.status = MessageStatus.ARCHIVED;
         this.updatedAt = LocalDateTime.now();
     }
 
-    // Logique métier : suppression d'un message
+    // Business logic: delete a message
     public void delete() {
         if (!status.canTransitionTo(MessageStatus.DELETED)) {
             throw new IllegalStateException(
-                "Impossible de supprimer un message avec le statut : " + status.getDisplayName());
+                "Cannot transition from " + status.getDisplayName() + " to DELETED");
         }
         this.status = MessageStatus.DELETED;
+        this.deletedAt = LocalDateTime.now(); // Set deletion timestamp
         this.updatedAt = LocalDateTime.now();
     }
 
-    // Logique métier : modification du contenu
+    // Business logic: update content
     public void updateContent(String newContent) {
         if (this.status == MessageStatus.DELETED) {
-            throw new IllegalStateException("Impossible de modifier un message supprimé");
+            throw new IllegalStateException("Cannot modify deleted message");
         }
         this.setContent(newContent);
         this.updatedAt = LocalDateTime.now();
     }
 
-    // Validation métier du contenu
+    // Business validation for content
     private void setContent(String content) {
         if (content == null || content.trim().isEmpty()) {
-            throw new IllegalArgumentException("Le contenu du message ne peut pas être vide");
+            throw new IllegalArgumentException("Message content cannot be empty");
         }
         if (content.length() > 1000) {
-            throw new IllegalArgumentException("Le contenu du message ne peut pas dépasser 1000 caractères");
+            throw new IllegalArgumentException("Message content is too long (max 1000 characters)");
         }
         this.content = content.trim();
     }
 
-    // Validation métier de l'auteur
+    // Business validation for author
     private void setAuthor(String author) {
         if (author == null || author.trim().isEmpty()) {
-            throw new IllegalArgumentException("L'auteur du message ne peut pas être vide");
+            throw new IllegalArgumentException("Author cannot be empty");
         }
         this.author = author.trim();
     }
 
-    // Méthode utilitaire
+    // Utility methods
     public boolean isPublished() {
         return this.status == MessageStatus.PUBLISHED;
     }
@@ -98,31 +119,7 @@ public class Message {
         return this.status == MessageStatus.DELETED;
     }
 
-    // Getters
-    public MessageId getId() {
-        return id;
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    public MessageStatus getStatus() {
-        return status;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public String getAuthor() {
-        return author;
-    }
-
+    // Equals and hashCode based on ID
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -144,6 +141,9 @@ public class Message {
                 ", status=" + status +
                 ", author='" + author + '\'' +
                 ", createdAt=" + createdAt +
+                ", updatedAt=" + updatedAt +
+                ", publishedAt=" + publishedAt +
+                ", deletedAt=" + deletedAt +
                 '}';
     }
 }

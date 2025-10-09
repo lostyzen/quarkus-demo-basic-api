@@ -8,7 +8,7 @@ import org.acme.demo.domain.model.MessageId;
 import org.acme.demo.domain.port.out.MessageRepository;
 
 /**
- * Use Case : Publication d'un message
+ * Use Case: Publish a message
  */
 @ApplicationScoped
 public class PublishMessageUseCase {
@@ -24,7 +24,7 @@ public class PublishMessageUseCase {
         Message message = messageRepository.findById(messageId)
             .orElseThrow(() -> new MessageNotFoundException(messageId.getValue()));
 
-        // La logique métier de publication est dans l'entité
+        // Business logic for publishing is in the entity
         message.publish();
 
         return messageRepository.save(message);

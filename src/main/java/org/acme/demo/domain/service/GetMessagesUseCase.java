@@ -9,7 +9,7 @@ import org.acme.demo.domain.port.out.MessageRepository;
 import java.util.List;
 
 /**
- * Use Case : Récupération des messages
+ * Use Case: Retrieve messages
  */
 @ApplicationScoped
 public class GetMessagesUseCase {
