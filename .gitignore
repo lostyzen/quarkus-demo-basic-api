@@ -8,6 +8,9 @@ target/
 .quarkus/
 quarkus.log
 
+# H2 Database files (local data - should not be versioned)
+data/
+
 # Java
 *.class
 *.log
