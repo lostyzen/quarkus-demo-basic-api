@@ -294,6 +294,132 @@ open target/site/jacoco/index.html
 
 ---
 
+## 🛠️ Technologies et Outils
+
+### Lombok - Réduction du Code Boilerplate
+
+Le projet utilise **Lombok 1.18.30** pour réduire considérablement le code boilerplate Java et améliorer la lisibilité du code.
+
+#### Configuration Maven
+```xml
+<dependency>
+    <groupId>org.projectlombok</groupId>
+    <artifactId>lombok</artifactId>
+    <version>1.18.30</version>
+    <scope>provided</scope>
+</dependency>
+```
+
+#### Annotations Utilisées dans le Projet
+
+##### `@Data` - Classes DTO et Entités
+```java
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class CreateMessageRequest {
+    private String content;
+    private String author;
+}
+```
+
+**Génère automatiquement** :
+- ✅ Getters pour tous les champs
+- ✅ Setters pour tous les champs  
+- ✅ `toString()` informatif
+- ✅ `equals()` et `hashCode()`
+
+##### `@Getter` - Modèles du Domaine
+```java
+@Getter
+public class Message {
+    private final String id;
+    private final String content;
+    private final String author;
+    // Constructeur et méthodes métier...
+}
+```
+
+**Avantages** :
+- 🔒 **Immutabilité préservée** (pas de setters)
+- 🎯 **Accès contrôlé** aux propriétés
+- 📖 **Code plus lisible** et concis
+
+##### `@NoArgsConstructor` / `@AllArgsConstructor`
+```java
+@NoArgsConstructor  // Constructeur sans paramètre (JPA)
+@AllArgsConstructor // Constructeur avec tous les paramètres
+public class MessageEntity {
+    // champs...
+}
+```
+
+#### Bénéfices de Lombok dans l'Architecture Hexagonale
+
+| Couche | Usage Lombok | Bénéfice |
+|--------|-------------|----------|
+| **Domaine** | `@Getter` uniquement | Préserve l'immutabilité |
+| **Application** | `@Data` pour DTOs | Simplifie les transferts |
+| **Infrastructure** | `@Data` + `@NoArgsConstructor` | Compatible JPA/JSON |
+
+#### Configuration IDE
+
+##### IntelliJ IDEA
+1. **Installer le plugin** :
+   - File → Settings → Plugins
+   - Rechercher "Lombok"
+   - Installer et redémarrer
+
+2. **Activer l'annotation processing** :
+   - File → Settings → Build → Compiler → Annotation Processors
+   - ✅ Cocher "Enable annotation processing"
+
+##### Eclipse
+```bash
+# Télécharger lombok.jar et exécuter
+java -jar lombok.jar
+# Suivre l'assistant d'installation
+```
+
+#### Validation de l'Installation
+
+```bash
+# Compiler le projet (doit réussir)
+./mvnw clean compile
+
+# Vérifier la génération des méthodes
+javap -cp target/classes org.acme.demo.infrastructure.adapter.in.rest.dto.MessageDto
+```
+
+**Sortie attendue** :
+```java
+public class MessageDto {
+    // Méthodes générées par Lombok
+    public java.lang.String getId();
+    public java.lang.String getContent();
+    public void setId(java.lang.String);
+    public boolean equals(java.lang.Object);
+    public java.lang.String toString();
+    // ...
+}
+```
+
+#### Impact sur les Tests
+
+Lombok simplifie également l'écriture des tests :
+
+```java
+// Avant Lombok
+CreateMessageRequest request = new CreateMessageRequest();
+request.setContent("Test message");
+request.setAuthor("Test author");
+
+// Avec Lombok @AllArgsConstructor
+CreateMessageRequest request = new CreateMessageRequest("Test message", "Test author");
+```
+
+---
+
 ## 🔧 Configuration Avancée
 
 ### Variables d'Environnement
