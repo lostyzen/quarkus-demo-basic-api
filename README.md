@@ -95,4 +95,4 @@ Ce projet illustre :
 
 ---
 
-**🎓 Projet éducatif** démontrant les bienfaits de l'architecture hexagonale dans un contexte Quarkus moderne.
+**🎓 Projet éducatif** sur l'architecture hexagonale dans un contexte Quarkus moderne.

@@ -559,4 +559,4 @@ jps -v
 ---
 
 **📝 Documentation maintained by the development team**  
-**🔄 Last updated**: January 2025
+**🔄 Last updated**: Octobre 2025
