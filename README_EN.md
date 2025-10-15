@@ -1,288 +1,633 @@
-# Quarkus REST API Demo
+# Quarkus Demo - Complete User Guide 🇺🇸
 
-A simple REST API demo using Quarkus 3.8.3 with GET and POST endpoints for message management.
+> **🌐 Other languages**: [🇫🇷 Version Française](README_FR.md) | [🏠 Back to home](README.md)  
+> **📚 Technical documentation**: [🏗️ Hexagonal Architecture](README_ARCHITECTURE_HEXAGONALE_EN.md)
 
-## 🎯 Demo Purpose
+---
 
-This application demonstrates:
-- How to create a simple REST API with Quarkus
-- Quarkus project configuration with Maven
-- Automated testing with RestAssured and JUnit
-- Packaging and running a Quarkus application
-- Automatic documentation with OpenAPI/Swagger
+## 📖 Table of Contents
 
-## 🚀 Features
+1. [🎯 Overview](#-overview)
+2. [🚀 Installation and Setup](#-installation-and-setup)
+3. [🗄️ H2 Database - Server Mode](#-h2-database---server-mode)
+4. [📡 REST API - Endpoints](#-rest-api---endpoints)
+5. [🧪 Testing and Quality](#-testing-and-quality)
+6. [🔧 Advanced Configuration](#-advanced-configuration)
+7. [🐛 Troubleshooting](#-troubleshooting)
 
-The API exposes two endpoints:
-- `GET /messages`: Retrieves the list of all messages
-- `POST /messages`: Adds a new message
+---
 
-Messages are stored in memory (static list) for demo simplicity.
+## 🎯 Overview
 
-## 📋 Prerequisites
+This project demonstrates the implementation of **hexagonal architecture** with Quarkus, transforming a simple REST API into a maintainable and testable application.
 
-- **Java 17** or higher
-- **Maven 3.8.1** or higher
-- **Git** (to clone the project)
+### Key Features
+- ✅ **Complete REST API** for message management
+- ✅ **Hexagonal architecture** (Ports & Adapters)
+- ✅ **H2 database** in TCP server mode
+- ✅ **Unit and integration tests**
+- ✅ **OpenAPI documentation** (Swagger)
+- ✅ **Monitoring** and health checks
 
-### Prerequisites verification
+---
+
+## 🚀 Installation and Setup
+
+### System Requirements
 ```bash
-java -version    # Should display Java 17+
-mvn -version     # Should display Maven 3.8.1+
+# Check Java
+java -version  # Required: Java 17+
+
+# Check Maven (optional, wrapper included)
+mvn -version   # Recommended: Maven 3.9+
 ```
 
-## 🛠️ Installation and Setup
-
-### 1. Clone the project
+### Project Installation
 ```bash
-git clone <your-repo-url>
+# 1. Clone the repository
+git clone <repository-url>
 cd quarkus-demo
+
+# 2. Install dependencies
+./mvnw clean compile
+
+# 3. Start the application
+./mvnw quarkus:dev
 ```
 
-### 2. Compile the project
+### Startup Verification
+Once the application is running, check these endpoints:
+- 🌐 **Application**: http://localhost:8080
+- 📊 **Swagger UI**: http://localhost:8080/q/swagger-ui
+- ❤️ **Health Check**: http://localhost:8080/q/health
+- 📈 **Metrics**: http://localhost:8080/q/metrics
+
+---
+
+## 🗄️ H2 Database - Server Mode
+
+### Advanced H2 Configuration
+
+Our application uses **H2 in TCP server mode** to allow simultaneous access from the application and external tools like DBeaver.
+
+#### H2 Database Architecture
+```
+Quarkus Application ──────┐
+                         │
+                         ├─► H2 TCP Server (Port 9092)
+                         │       │
+DBeaver/External Tools ──┘       │
+                                 ▼
+                         H2 Database File
+                         (./data/quarkus-demo.mv.db)
+```
+
+#### Automatic Configuration
+
+The `H2TcpServerManager` class automatically starts an H2 TCP server:
+
+**Features**:
+- ✅ **Automatic startup** when Quarkus launches
+- ✅ **Clean shutdown** when application stops  
+- ✅ **Port conflict management**
+- ✅ **File persistence** (survives restarts)
+- ✅ **Concurrent access** Quarkus + external tools
+
+### Connecting with DBeaver
+
+#### DBeaver Installation
 ```bash
-mvn clean compile
+# With Scoop (Windows)
+scoop install dbeaver
+
+# Or manual download from https://dbeaver.io
 ```
 
-### 3. Run tests
-```bash
-mvn test
-```
+#### DBeaver Connection Configuration
 
-### 4. Package the application
-```bash
-mvn clean package
-```
+1. **Create a new connection**:
+   - Type: **H2 Server**
+   - Host: `localhost`
+   - Port: `9092`
+   - Database: `quarkus-demo`
+   - Username: `sa`
+   - Password: *(empty)*
 
-## 🏃‍♂️ Running the Application
-
-### Development mode (recommended for development)
-```bash
-mvn quarkus:dev
-```
-The application starts on http://localhost:8080 with hot-reload enabled.
-
-### Production mode (from jar)
-```bash
-java -jar target/quarkus-app/quarkus-run.jar
-```
-
-## 🧪 API Testing
-
-### With curl
-
-**Retrieve all messages:**
-```bash
-curl -X GET http://localhost:8080/messages
-```
-
-**Add a message:**
-```bash
-curl -X POST http://localhost:8080/messages \
-  -H "Content-Type: application/json" \
-  -d '{"content":"Hello Quarkus!"}'
-```
-
-**Complete test:**
-```bash
-# 1. View empty list
-curl -X GET http://localhost:8080/messages
-
-# 2. Add a message
-curl -X POST http://localhost:8080/messages \
-  -H "Content-Type: application/json" \
-  -d '{"content":"My first message"}'
-
-# 3. View updated list
-curl -X GET http://localhost:8080/messages
-```
-
-### With Swagger UI
-Access http://localhost:8080/q/swagger-ui/ for an interactive graphical interface.
-
-## 📁 Project Structure
-
-```
-quarkus-demo/
-├── src/
-│   ├── main/
-│   │   ├── java/org/acme/demo/
-│   │   │   ├── Message.java          # Message POJO
-│   │   │   └── MessageResource.java  # REST Resource
-│   │   └── resources/
-│   │       └── application.properties # Quarkus Configuration
-│   └── test/
-│       └── java/org/acme/demo/
-│           └── MessageResourceTest.java # Integration Tests
-├── target/
-│   └── quarkus-app/
-│       └── quarkus-run.jar           # Executable Application
-├── pom.xml                           # Maven Configuration
-├── .gitignore                        # Git ignored files
-├── README.md                         # This file
-├── README_FR.md                      # French version
-└── README_EN.md                      # English version
-```
-
-## ⚙️ pom.xml Structure
-
-### Important Properties
-- **Quarkus 3.8.3**: Stable and modern version with Jakarta EE support
-- **Java 17**: LTS version required by Quarkus 3.x
-- **UTF-8**: Source and report encoding
-
-### Key Dependencies
-
-#### Production
-- `quarkus-resteasy-reactive-jackson`: REST + JSON support
-- `quarkus-smallrye-openapi`: Automatic OpenAPI/Swagger documentation
-- `quarkus-arc`: Dependency injection (CDI)
-
-#### Tests
-- `quarkus-junit5`: Quarkus testing framework
-- `rest-assured`: Simplified REST API testing
-- `hamcrest`: Matchers for test assertions
-
-### Essential Plugins
-
-#### quarkus-maven-plugin
-```xml
-<plugin>
-  <groupId>io.quarkus</groupId>
-  <artifactId>quarkus-maven-plugin</artifactId>
-  <executions>
-    <execution>
-      <goals>
-        <goal>build</goal>              <!-- Generates fast-jar -->
-        <goal>generate-code</goal>      <!-- Code generation -->
-        <goal>generate-code-tests</goal> <!-- Test generation -->
-      </goals>
-    </execution>
-  </executions>
-</plugin>
-```
-
-#### Standard Maven Plugins
-- **maven-compiler-plugin**: Java 17 compilation with preserved parameters
-- **maven-surefire-plugin**: Unit tests with Quarkus configuration
-- **maven-failsafe-plugin**: Integration tests
-
-### Critical Points for Proper Functioning
-
-1. **Correct Quarkus BOM**:
-   ```xml
-   <groupId>io.quarkus</groupId>
-   <artifactId>quarkus-bom</artifactId>
+2. **Complete JDBC URL**:
+   ```
+   jdbc:h2:tcp://localhost:9092/quarkus-demo
    ```
 
-2. **Quarkus Plugin Goals**: Required to generate `target/quarkus-app/`
+3. **Connection test**:
+   - Make sure Quarkus is running
+   - Click "Test Connection" in DBeaver
+   - You should see: ✅ "Connected"
 
-3. **Test Configuration**: System variables required for Quarkus
+#### Useful SQL Queries
 
-4. **Package Type**: `fast-jar` configured in `application.properties`
+```sql
+-- View all messages
+SELECT * FROM message;
 
-## 🔧 Configuration
+-- Messages by status
+SELECT * FROM message WHERE status = 'PUBLISHED';
 
-### application.properties
-```properties
-# Package type (generates target/quarkus-app/)
-quarkus.package.type=fast-jar
+-- Recent messages
+SELECT * FROM message 
+ORDER BY created_at DESC 
+LIMIT 10;
 
-# OIDC configuration (example, not used in this demo)
-quarkus.oidc.auth-server-url=https://oidc.example.com/auth/realm/client
+-- Delete a specific message
+DELETE FROM message WHERE id = 'message-uuid';
+
+-- Statistics by status
+SELECT status, COUNT(*) as total 
+FROM message 
+GROUP BY status;
 ```
 
-## 🧪 Automated Tests
+### Data Management
 
-The project includes integration tests that:
-- Verify the message list is initially empty
-- Test message addition via POST
-- Validate message retrieval via GET
-- Use RestAssured to simulate HTTP requests
-
-Running tests:
+#### File Locations
 ```bash
-mvn test
+# H2 files created automatically
+./data/quarkus-demo.mv.db      # Main database
+./data/quarkus-demo.trace.db   # Trace file (debugging)
 ```
 
-## 📊 Logging and Monitoring
+#### Backup and Restore
+```bash
+# Backup (copy files)
+cp -r ./data ./backup-$(date +%Y%m%d)
 
-The project uses **Logback** for advanced log management with multiple detail levels.
+# Restore (replace files)
+rm -rf ./data
+cp -r ./backup-20240101 ./data
+```
 
-### Log Configuration
+#### Complete Database Reset
+```bash
+# Stop Quarkus (Ctrl+C)
+rm -rf ./data
+# Restart Quarkus - new database created automatically
+./mvnw quarkus:dev
+```
 
-Logs are configured in `application.properties` and `logback.xml`:
+---
 
-- **Console**: Formatted logs with colors (INFO level)
-- **File**: `logs/quarkus-demo.log` with automatic rotation (DEBUG level)
-- **HTTP Access Logs**: `logs/access.log` to trace requests
+## 📡 REST API - Endpoints
 
-### Available Log Levels
+### Messages - Complete Management
 
-- `TRACE`: Very detailed (advanced debugging)
-- `DEBUG`: Debug information
-- `INFO`: General information (default)
-- `WARN`: Warnings
-- `ERROR`: Errors
+#### Create a Message
+```bash
+curl -X POST http://localhost:8080/api/messages \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content": "My first message with hexagonal architecture!",
+    "author": "Java Developer"
+  }'
+```
 
-### Customizing Log Levels
+**Response**:
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "content": "My first message...",
+  "author": "Java Developer",
+  "status": "DRAFT",
+  "createdAt": "2025-01-15T10:30:00",
+  "updatedAt": "2025-01-15T10:30:00"
+}
+```
 
-To temporarily change log level, modify `application.properties`:
+#### Publish a Message
+```bash
+curl -X POST http://localhost:8080/api/messages/{id}/publish
+```
+
+#### List Messages
+```bash
+# All active messages
+curl http://localhost:8080/api/messages
+
+# By status
+curl http://localhost:8080/api/messages/status/PUBLISHED
+
+# By author
+curl http://localhost:8080/api/messages/author/JohnDoe
+```
+
+#### Update a Message
+```bash
+curl -X PUT http://localhost:8080/api/messages/{id} \
+  -H "Content-Type: application/json" \
+  -d '{"content": "Modified content"}'
+```
+
+#### Delete a Message (logical)
+```bash
+curl -X DELETE http://localhost:8080/api/messages/{id}
+```
+
+### HTTP Response Codes
+
+| Code | Meaning | Use Case |
+|------|---------|----------|
+| `200` | OK | Successful retrieval, update |
+| `201` | Created | Message created successfully |
+| `204` | No Content | Successful deletion |
+| `400` | Bad Request | Invalid data |
+| `404` | Not Found | Message not found |
+| `500` | Server Error | Server error |
+
+---
+
+## 🧪 Testing and Quality
+
+### Implemented Test Types
+
+#### Unit Tests (Ultra-fast)
+```bash
+# Domain tests only
+./mvnw test -Dtest="*Test"
+
+# Specific test
+./mvnw test -Dtest="MessageTest"
+```
+
+**Characteristics**:
+- ⚡ **< 10ms per test** (no I/O)
+- 🎯 **Pure business logic**
+- 🧪 **Mocks for dependencies**
+
+#### Integration Tests
+```bash
+# Tests with database
+./mvnw test -Dtest="*IntegrationTest"
+
+# Complete controller test
+./mvnw test -Dtest="MessageControllerIntegrationTest"
+```
+
+**Characteristics**:
+- 🔄 **In-memory H2 test database**
+- 📡 **Complete end-to-end tests**
+- 🌐 **HTTP and JSON validation**
+
+#### Code Coverage
+```bash
+# Generate coverage report
+./mvnw jacoco:report
+
+# View report
+open target/site/jacoco/index.html
+```
+
+### Testing Strategy
+
+| Type | Layer | Purpose | Speed |
+|------|-------|---------|-------|
+| **Unit** | Domain | Business logic | ⚡⚡⚡ |
+| **Integration** | Application | E2E behavior | ⚡⚡ |
+| **Acceptance** | API | User contract | ⚡ |
+
+---
+
+## 🛠️ Technologies and Tools
+
+### Lombok - Boilerplate Code Reduction
+
+The project uses **Lombok 1.18.30** to significantly reduce Java boilerplate code and improve code readability.
+
+#### Maven Configuration
+```xml
+<dependency>
+    <groupId>org.projectlombok</groupId>
+    <artifactId>lombok</artifactId>
+    <version>1.18.30</version>
+    <scope>provided</scope>
+</dependency>
+```
+
+#### Annotations Used in the Project
+
+##### `@Data` - DTO Classes and Entities
+```java
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class CreateMessageRequest {
+    private String content;
+    private String author;
+}
+```
+
+**Automatically generates**:
+- ✅ Getters for all fields
+- ✅ Setters for all fields  
+- ✅ Informative `toString()`
+- ✅ `equals()` and `hashCode()`
+
+##### `@Getter` - Domain Models
+```java
+@Getter
+public class Message {
+    private final String id;
+    private final String content;
+    private final String author;
+    // Constructor and business methods...
+}
+```
+
+**Benefits**:
+- 🔒 **Preserved immutability** (no setters)
+- 🎯 **Controlled access** to properties
+- 📖 **More readable** and concise code
+
+##### `@NoArgsConstructor` / `@AllArgsConstructor`
+```java
+@NoArgsConstructor  // Parameter-less constructor (JPA)
+@AllArgsConstructor // Constructor with all parameters
+public class MessageEntity {
+    // fields...
+}
+```
+
+#### Lombok Benefits in Hexagonal Architecture
+
+| Layer | Lombok Usage | Benefit |
+|-------|-------------|---------|
+| **Domain** | `@Getter` only | Preserves immutability |
+| **Application** | `@Data` for DTOs | Simplifies transfers |
+| **Infrastructure** | `@Data` + `@NoArgsConstructor` | JPA/JSON compatible |
+
+#### IDE Configuration
+
+##### IntelliJ IDEA
+1. **Install the plugin**:
+   - File → Settings → Plugins
+   - Search for "Lombok"
+   - Install and restart
+
+2. **Enable annotation processing**:
+   - File → Settings → Build → Compiler → Annotation Processors
+   - ✅ Check "Enable annotation processing"
+
+##### Eclipse
+```bash
+# Download lombok.jar and run
+java -jar lombok.jar
+# Follow the installation wizard
+```
+
+#### Installation Validation
+
+```bash
+# Compile the project (should succeed)
+./mvnw clean compile
+
+# Verify method generation
+javap -cp target/classes io.lostyzen.demo.infrastructure.adapter.in.rest.dto.MessageDto
+```
+
+**Expected output**:
+```java
+public class MessageDto {
+    // Methods generated by Lombok
+    public java.lang.String getId();
+    public java.lang.String getContent();
+    public void setId(java.lang.String);
+    public boolean equals(java.lang.Object);
+    public java.lang.String toString();
+    // ...
+}
+```
+
+#### Impact on Testing
+
+Lombok also simplifies test writing:
+
+```java
+// Before Lombok
+CreateMessageRequest request = new CreateMessageRequest();
+request.setContent("Test message");
+request.setAuthor("Test author");
+
+// With Lombok @AllArgsConstructor
+CreateMessageRequest request = new CreateMessageRequest("Test message", "Test author");
+```
+
+---
+
+## 🔧 Advanced Configuration
+
+### Environment Variables
+
+```bash
+# Development mode
+export QUARKUS_PROFILE=dev
+
+# Database configuration
+export QUARKUS_DATASOURCE_JDBC_URL=jdbc:h2:file:./data/quarkus-demo
+export QUARKUS_DATASOURCE_USERNAME=sa
+export QUARKUS_DATASOURCE_PASSWORD=
+
+# Log level
+export QUARKUS_LOG_CONSOLE_LEVEL=DEBUG
+```
+
+### Configuration Profiles
+
+#### Development (default)
 ```properties
-# Global level
-quarkus.log.level=DEBUG
-
-# Per-package level
-quarkus.log.category."org.acme.demo".level=TRACE
+# application.properties
+%dev.quarkus.log.console.level=DEBUG
+%dev.quarkus.hibernate-orm.log.sql=true
 ```
 
-### Generated Log Files
+#### Test
+```properties
+%test.quarkus.datasource.jdbc.url=jdbc:h2:mem:test
+%test.quarkus.hibernate-orm.database.generation=drop-and-create
+```
 
-- `logs/quarkus-demo.log`: Main application logs
-- `logs/access.log`: HTTP access logs
-- Automatic rotation (10MB max, 5 backup files)
+#### Production
+```properties
+%prod.quarkus.log.console.level=INFO
+%prod.quarkus.hibernate-orm.database.generation=validate
+```
 
-### API Call Monitoring
+### Customizable H2 Parameters
 
-Logs automatically trace:
-- ✅ GET/POST calls on `/messages`
-- ✅ Request and response content
-- ✅ Validation errors
-- ✅ Processing times
-- ✅ Startup/shutdown details
+```properties
+# H2 TCP server port
+h2.tcp.port=9092
 
-## 📊 Useful Endpoints
+# Database directory
+h2.database.path=./data/quarkus-demo
 
-- **API**: http://localhost:8080/messages
-- **Documentation**: http://localhost:8080/q/swagger-ui/
-- **Health check**: http://localhost:8080/q/health
-- **Metrics**: http://localhost:8080/q/metrics
+# Connection parameters
+quarkus.datasource.jdbc.url=jdbc:h2:file:${h2.database.path};DB_CLOSE_DELAY=-1
+```
+
+---
 
 ## 🐛 Troubleshooting
 
-### quarkus-app folder is not generated
-- Check that all Maven plugins are present in pom.xml
-- Run `mvn clean package` and check error logs
+### Common Issues
 
-### Error "no main manifest attribute"
-- Don't use `target/quarkus-demo-1.0-SNAPSHOT.jar`
-- Use `target/quarkus-app/quarkus-run.jar`
+#### Port 8080 Already in Use
+```bash
+# Identify the process
+netstat -ano | findstr :8080
+taskkill /PID <process-id> /F
 
-### Test failures
-- Check that the application is not already running on port 8080
-- Run `mvn clean test` for a clean environment
+# Or change Quarkus port
+./mvnw quarkus:dev -Dquarkus.http.port=8081
+```
 
-### Dependency issues
-- Run `mvn clean install -U` to force dependency updates
-- Verify you're using Java 17+
+#### H2 Database Locked
+```bash
+# Error: Database may be already in use
+# Solution: Stop all Java processes
+taskkill /F /IM java.exe
 
-## 📚 Going Further
+# Or remove lock file
+rm ./data/*.lock.db
+```
 
-- [Quarkus Documentation](https://quarkus.io/guides/)
-- [REST with Quarkus Guide](https://quarkus.io/guides/rest-json)
-- [Testing with Quarkus](https://quarkus.io/guides/getting-started-testing)
-- [RestAssured Documentation](https://rest-assured.io/)
+#### DBeaver Connection Failed
+```bash
+# Check that Quarkus is running
+curl http://localhost:8080/q/health
 
-## 👥 Contributing
+# Check H2 port
+netstat -ano | findstr :9092
 
-This project serves as an educational demo. Feel free to use it as a base for your own Quarkus projects!
+# Test H2 connection
+telnet localhost 9092
+```
+
+### Debug Logging
+
+#### Enable SQL Logs with Values and Formatting
+
+The project uses **P6Spy** to display SQL queries with actual parameter values (instead of `?`) and professional formatting.
+
+**Configuration**:
+
+1. **Maven Dependencies** (already configured):
+```xml
+<dependency>
+    <groupId>p6spy</groupId>
+    <artifactId>p6spy</artifactId>
+    <version>3.9.1</version>
+</dependency>
+```
+
+2. **Configuration in `application.properties`**:
+```properties
+# P6Spy driver that intercepts JDBC queries
+quarkus.datasource.db-kind=h2
+quarkus.datasource.jdbc.driver=com.p6spy.engine.spy.P6SpyDriver
+quarkus.datasource.jdbc.url=jdbc:p6spy:h2:file:./data/quarkus-demo;DB_CLOSE_DELAY=-1
+
+# Hibernate dialect (required with P6Spy)
+quarkus.hibernate-orm.dialect=org.hibernate.dialect.H2Dialect
+```
+
+3. **File `spy.properties`** (in `src/main/resources`):
+```properties
+# Real JDBC driver
+realdatasource=org.h2.Driver
+
+# Use custom formatter with Hibernate indentation
+logMessageFormat=org.acme.demo.infrastructure.config.P6SpySqlFormatter
+
+# Log via SLF4J
+appender=com.p6spy.engine.spy.appender.Slf4JLogger
+
+# Filter useless categories
+excludecategories=info,debug,result,resultset,batch
+excludebinary=true
+autoflush=true
+```
+
+**Result in logs**:
+```
+Hibernate: 
+    select
+        me1_0.id,
+        me1_0.author,
+        me1_0.content,
+        me1_0.created_at,
+        me1_0.status 
+    from
+        messages me1_0 
+    where
+        me1_0.status='PUBLISHED'
+```
+
+**Advantages**:
+- ✅ **Real values** displayed directly (no `?`)
+- ✅ **Professional indentation** (native Hibernate formatter)
+- ✅ **All query types**: SELECT, INSERT, UPDATE, DELETE
+- ✅ **Ideal for development** and debugging
+
+**⚠️ Important**: P6Spy adds a slight overhead. In production, disable it by reverting to standard H2 configuration:
+```properties
+%prod.quarkus.datasource.jdbc.driver=org.h2.Driver
+%prod.quarkus.datasource.jdbc.url=jdbc:h2:file:./data/quarkus-demo;DB_CLOSE_DELAY=-1
+```
+
+#### Standard Hibernate Logs (without values)
+```properties
+quarkus.hibernate-orm.log.sql=true
+quarkus.hibernate-orm.log.format-sql=true
+quarkus.log.category."org.hibernate.SQL".level=DEBUG
+```
+
+#### Detailed H2 Logs
+```properties
+quarkus.log.category."org.h2".level=DEBUG
+quarkus.log.category."io.lostyzen.demo.infrastructure.config.H2TcpServerManager".level=DEBUG
+```
+
+### Frequent Error Messages
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| `Port 8080 in use` | Application already running | Stop existing process |
+| `Database locked` | Active H2 connection | Close DBeaver or restart |
+| `Connection refused :9092` | H2 TCP server not started | Check startup logs |
+| `Tests failing` | Polluted test database | `./mvnw clean test` |
+
+---
+
+## 📞 Support and Resources
+
+### Official Documentation
+- 📚 **Quarkus**: https://quarkus.io/guides/
+- 🗄️ **H2 Database**: http://h2database.com/html/main.html
+- 🏗️ **Hexagonal Architecture**: [Detailed Guide](README_ARCHITECTURE_HEXAGONALE_EN.md)
+
+### Diagnostic Commands
+```bash
+# Java version
+java -version
+
+# Quarkus information
+./mvnw quarkus:info
+
+# Port status
+netstat -ano | findstr "8080\|9092"
+
+# Active Java processes  
+jps -v
+```
+
+---
+
+**📝 Documentation maintained by the development team**  
+**🔄 Last updated**: Octobre 2025
