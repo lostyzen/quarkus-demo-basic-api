@@ -388,7 +388,7 @@ java -jar lombok.jar
 ./mvnw clean compile
 
 # Vérifier la génération des méthodes
-javap -cp target/classes org.acme.demo.infrastructure.adapter.in.rest.dto.MessageDto
+javap -cp target/classes io.lostyzen.demo.infrastructure.adapter.in.rest.dto.MessageDto
 ```
 
 **Sortie attendue** :
@@ -511,16 +511,87 @@ telnet localhost 9092
 
 ### Logs de Débogage
 
-#### Activer les Logs SQL
+#### Activer les Logs SQL avec Valeurs et Formatage
+
+Le projet utilise **P6Spy** pour afficher les requêtes SQL avec les valeurs réelles des paramètres (au lieu des `?`) et un formatage professionnel.
+
+**Configuration** :
+
+1. **Dépendances Maven** (déjà configurées) :
+```xml
+<dependency>
+    <groupId>p6spy</groupId>
+    <artifactId>p6spy</artifactId>
+    <version>3.9.1</version>
+</dependency>
+```
+
+2. **Configuration dans `application.properties`** :
+```properties
+# Driver P6Spy qui intercepte les requêtes JDBC
+quarkus.datasource.db-kind=h2
+quarkus.datasource.jdbc.driver=com.p6spy.engine.spy.P6SpyDriver
+quarkus.datasource.jdbc.url=jdbc:p6spy:h2:file:./data/quarkus-demo;DB_CLOSE_DELAY=-1
+
+# Dialecte Hibernate (nécessaire avec P6Spy)
+quarkus.hibernate-orm.dialect=org.hibernate.dialect.H2Dialect
+```
+
+3. **Fichier `spy.properties`** (dans `src/main/resources`) :
+```properties
+# Driver JDBC réel
+realdatasource=org.h2.Driver
+
+# Utiliser le formatteur personnalisé avec indentation Hibernate
+logMessageFormat=org.acme.demo.infrastructure.config.P6SpySqlFormatter
+
+# Logger via SLF4J
+appender=com.p6spy.engine.spy.appender.Slf4JLogger
+
+# Filtrer les catégories inutiles
+excludecategories=info,debug,result,resultset,batch
+excludebinary=true
+autoflush=true
+```
+
+**Résultat dans les logs** :
+```
+Hibernate: 
+    select
+        me1_0.id,
+        me1_0.author,
+        me1_0.content,
+        me1_0.created_at,
+        me1_0.status 
+    from
+        messages me1_0 
+    where
+        me1_0.status='PUBLISHED'
+```
+
+**Avantages** :
+- ✅ **Valeurs réelles** affichées directement (pas de `?`)
+- ✅ **Indentation professionnelle** (formatteur Hibernate natif)
+- ✅ **Tous les types de requêtes** : SELECT, INSERT, UPDATE, DELETE
+- ✅ **Idéal pour le développement** et le débogage
+
+**⚠️ Important** : P6Spy ajoute un léger overhead. En production, désactivez-le en revenant à la configuration H2 standard :
+```properties
+%prod.quarkus.datasource.jdbc.driver=org.h2.Driver
+%prod.quarkus.datasource.jdbc.url=jdbc:h2:file:./data/quarkus-demo;DB_CLOSE_DELAY=-1
+```
+
+#### Logs Hibernate Standard (sans valeurs)
 ```properties
 quarkus.hibernate-orm.log.sql=true
+quarkus.hibernate-orm.log.format-sql=true
 quarkus.log.category."org.hibernate.SQL".level=DEBUG
 ```
 
 #### Logs H2 Détaillés
 ```properties
 quarkus.log.category."org.h2".level=DEBUG
-quarkus.log.category."org.acme.demo.infrastructure.config.H2TcpServerManager".level=DEBUG
+quarkus.log.category."io.lostyzen.demo.infrastructure.config.H2TcpServerManager".level=DEBUG
 ```
 
 ### Messages d'Erreur Fréquents

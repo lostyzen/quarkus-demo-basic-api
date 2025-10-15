@@ -1,33 +1,53 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>org.example</groupId>
+  <groupId>io.lostyzen</groupId>
   <artifactId>quarkus-demo</artifactId>
   <version>1.0-SNAPSHOT</version>
+
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <quarkus.platform.version>3.8.3</quarkus.platform.version>
+
+    <!-- Mise à jour Quarkus vers la dernière version stable (corrige CVE Netty et Hibernate) -->
+    <quarkus.platform.version>3.28.3</quarkus.platform.version>
     <quarkus.platform.group-id>io.quarkus</quarkus.platform.group-id>
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
+
+    <!-- Versions Java -->
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
+
+    <!-- Versions sécurisées des dépendances -->
+    <lombok.version>1.18.34</lombok.version>
+    <p6spy.version>3.9.1</p6spy.version>
+    <rest-assured.version>5.5.0</rest-assured.version>
+    <hamcrest.version>3.0</hamcrest.version>
+
+    <!-- Versions des plugins Maven -->
+    <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
+    <maven-surefire-plugin.version>3.5.2</maven-surefire-plugin.version>
+    <maven-failsafe-plugin.version>3.5.2</maven-failsafe-plugin.version>
+    <dependency-check-maven.version>11.1.1</dependency-check-maven.version>
   </properties>
+
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>io.quarkus</groupId>
-        <artifactId>quarkus-bom</artifactId>
+        <groupId>${quarkus.platform.group-id}</groupId>
+        <artifactId>${quarkus.platform.artifact-id}</artifactId>
         <version>${quarkus.platform.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>
+
   <dependencies>
+    <!-- Quarkus Extensions -->
     <dependency>
       <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-resteasy-reactive-jackson</artifactId>
+      <artifactId>quarkus-rest-jackson</artifactId>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
@@ -61,42 +81,65 @@
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-jdbc-h2</artifactId>
     </dependency>
+
+    <!-- P6Spy pour afficher les valeurs SQL bindées -->
+    <dependency>
+      <groupId>p6spy</groupId>
+      <artifactId>p6spy</artifactId>
+      <version>${p6spy.version}</version>
+    </dependency>
+
+    <!-- Hibernate SQL Formatter pour formater proprement les requêtes SQL -->
+    <dependency>
+      <groupId>org.hibernate.orm</groupId>
+      <artifactId>hibernate-core</artifactId>
+    </dependency>
+
+    <!-- Lombok pour réduire le code boilerplate -->
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
-      <version>1.18.30</version>
+      <version>${lombok.version}</version>
       <scope>provided</scope>
     </dependency>
+
+    <!-- Dépendances de test -->
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-junit5</artifactId>
+      <version>${quarkus.platform.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-junit5-mockito</artifactId>
+      <version>${quarkus.platform.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>io.rest-assured</groupId>
       <artifactId>rest-assured</artifactId>
-      <version>5.3.2</version>
+      <version>${rest-assured.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.hamcrest</groupId>
       <artifactId>hamcrest</artifactId>
-      <version>2.2</version>
+      <version>${hamcrest.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
+
   <build>
     <plugins>
       <plugin>
-        <groupId>io.quarkus</groupId>
+        <groupId>${quarkus.platform.group-id}</groupId>
         <artifactId>quarkus-maven-plugin</artifactId>
         <version>${quarkus.platform.version}</version>
         <extensions>true</extensions>
+        <configuration>
+          <packageType>fast-jar</packageType>
+        </configuration>
         <executions>
           <execution>
             <goals>
@@ -110,7 +153,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.11.0</version>
+        <version>${maven-compiler-plugin.version}</version>
         <configuration>
           <compilerArgs>
             <arg>-parameters</arg>
@@ -119,7 +162,7 @@
             <path>
               <groupId>org.projectlombok</groupId>
               <artifactId>lombok</artifactId>
-              <version>1.18.30</version>
+              <version>${lombok.version}</version>
             </path>
           </annotationProcessorPaths>
         </configuration>
@@ -127,7 +170,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>3.0.0</version>
+        <version>${maven-surefire-plugin.version}</version>
         <configuration>
           <systemPropertyVariables>
             <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
@@ -138,7 +181,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
-        <version>3.0.0</version>
+        <version>${maven-failsafe-plugin.version}</version>
         <executions>
           <execution>
             <goals>
@@ -152,6 +195,26 @@
                 <maven.home>${maven.home}</maven.home>
               </systemPropertyVariables>
             </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.owasp</groupId>
+        <artifactId>dependency-check-maven</artifactId>
+        <version>${dependency-check-maven.version}</version>
+        <configuration>
+          <failBuildOnCVSS>7</failBuildOnCVSS>
+          <suppressionFiles>
+            <suppressionFile>dependency-check-suppressions.xml</suppressionFile>
+          </suppressionFiles>
+          <!-- Désactivation de l'analyseur OSS Index pour éviter les erreurs 401/429 -->
+          <ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>check</goal>
+            </goals>
           </execution>
         </executions>
       </plugin>

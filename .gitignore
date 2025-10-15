@@ -148,5 +148,5 @@ cursor/
 *.keystore
 *.jks
 
-# Scrapbook - Articles privés
-scrapbook/articles/
+# Scrapbook - Complete directory (internal documentation and private articles)
+scrapbook/
