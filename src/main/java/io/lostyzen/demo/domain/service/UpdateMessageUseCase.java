@@ -5,13 +5,15 @@ import jakarta.inject.Inject;
 import io.lostyzen.demo.domain.exception.MessageNotFoundException;
 import io.lostyzen.demo.domain.model.Message;
 import io.lostyzen.demo.domain.model.MessageId;
+import io.lostyzen.demo.domain.port.in.UpdateMessagePort;
 import io.lostyzen.demo.domain.port.out.MessageRepository;
 
 /**
  * Use Case: Update message content
+ * Implements the UpdateMessagePort interface to provide loose coupling
  */
 @ApplicationScoped
-public class UpdateMessageUseCase {
+public class UpdateMessageUseCase implements UpdateMessagePort {
 
     private final MessageRepository messageRepository;
 
@@ -20,6 +22,7 @@ public class UpdateMessageUseCase {
         this.messageRepository = messageRepository;
     }
 
+    @Override
     public Message execute(MessageId messageId, String newContent) {
         Message message = messageRepository.findById(messageId)
             .orElseThrow(() -> new MessageNotFoundException(messageId.getValue()));

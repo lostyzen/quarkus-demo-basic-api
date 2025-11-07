@@ -5,13 +5,15 @@ import jakarta.inject.Inject;
 import io.lostyzen.demo.domain.exception.MessageNotFoundException;
 import io.lostyzen.demo.domain.model.Message;
 import io.lostyzen.demo.domain.model.MessageId;
+import io.lostyzen.demo.domain.port.in.DeleteMessagePort;
 import io.lostyzen.demo.domain.port.out.MessageRepository;
 
 /**
  * Use Case: Delete a message
+ * Implements the DeleteMessagePort interface to provide loose coupling
  */
 @ApplicationScoped
-public class DeleteMessageUseCase {
+public class DeleteMessageUseCase implements DeleteMessagePort {
 
     private final MessageRepository messageRepository;
 
@@ -20,6 +22,7 @@ public class DeleteMessageUseCase {
         this.messageRepository = messageRepository;
     }
 
+    @Override
     public void execute(MessageId messageId) {
         Message message = messageRepository.findById(messageId)
             .orElseThrow(() -> new MessageNotFoundException(messageId.getValue()));
