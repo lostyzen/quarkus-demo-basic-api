@@ -4,14 +4,14 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
- * Value Object représentant l'identifiant d'un message
+ * Value Object representing a message identifier
  */
 public class MessageId {
     private final String value;
 
     public MessageId(String value) {
         if (value == null || value.trim().isEmpty()) {
-            throw new IllegalArgumentException("MessageId ne peut pas être vide");
+            throw new IllegalArgumentException("MessageId cannot be empty");
         }
         this.value = value;
     }

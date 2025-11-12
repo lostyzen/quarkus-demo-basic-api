@@ -137,9 +137,6 @@
         <artifactId>quarkus-maven-plugin</artifactId>
         <version>${quarkus.platform.version}</version>
         <extensions>true</extensions>
-        <configuration>
-          <packageType>fast-jar</packageType>
-        </configuration>
         <executions>
           <execution>
             <goals>
@@ -147,6 +144,11 @@
               <goal>generate-code</goal>
               <goal>generate-code-tests</goal>
             </goals>
+            <configuration>
+              <properties>
+                <quarkus.package.jar.type>fast-jar</quarkus.package.jar.type>
+              </properties>
+            </configuration>
           </execution>
         </executions>
       </plugin>

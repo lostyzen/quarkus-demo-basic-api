@@ -6,11 +6,12 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
+import io.lostyzen.demo.domain.exception.MessageAlreadyDeletedException;
 import io.lostyzen.demo.domain.exception.MessageNotFoundException;
 import io.lostyzen.demo.domain.model.Message;
 import io.lostyzen.demo.domain.model.MessageId;
 import io.lostyzen.demo.domain.model.MessageStatus;
-import io.lostyzen.demo.domain.service.*;
+import io.lostyzen.demo.domain.port.in.*;
 import io.lostyzen.demo.infrastructure.adapter.in.rest.dto.CreateMessageRequest;
 import io.lostyzen.demo.infrastructure.adapter.in.rest.dto.MessageDto;
 import io.lostyzen.demo.infrastructure.adapter.in.rest.dto.UpdateMessageRequest;
@@ -21,9 +22,9 @@ import java.util.List;
 import java.util.logging.Logger;
 
 /**
- * REST Adapter (Adapter In) using domain Use Cases
+ * REST Adapter (Adapter In) using domain Use Cases through Port interfaces
  * This controller contains NO business logic - everything is delegated to Use Cases
- * Uses Lombok for reducing boilerplate code
+ * Depends on Port interfaces (not implementations) for loose coupling
  */
 @Path("/api/messages")
 @Produces(MediaType.APPLICATION_JSON)
@@ -33,23 +34,24 @@ public class MessageController {
 
     private static final Logger LOG = Logger.getLogger(MessageController.class.getName());
 
-    private final CreateMessageUseCase createMessageUseCase;
-    private final GetMessagesUseCase getMessagesUseCase;
-    private final UpdateMessageUseCase updateMessageUseCase;
-    private final PublishMessageUseCase publishMessageUseCase;
-    private final DeleteMessageUseCase deleteMessageUseCase;
+    // ✅ Dependencies on PORT INTERFACES (not concrete classes)
+    private final CreateMessagePort createMessagePort;
+    private final GetMessagesPort getMessagesPort;
+    private final UpdateMessagePort updateMessagePort;
+    private final PublishMessagePort publishMessagePort;
+    private final DeleteMessagePort deleteMessagePort;
 
     @Inject
-    public MessageController(CreateMessageUseCase createMessageUseCase,
-                           GetMessagesUseCase getMessagesUseCase,
-                           UpdateMessageUseCase updateMessageUseCase,
-                           PublishMessageUseCase publishMessageUseCase,
-                           DeleteMessageUseCase deleteMessageUseCase) {
-        this.createMessageUseCase = createMessageUseCase;
-        this.getMessagesUseCase = getMessagesUseCase;
-        this.updateMessageUseCase = updateMessageUseCase;
-        this.publishMessageUseCase = publishMessageUseCase;
-        this.deleteMessageUseCase = deleteMessageUseCase;
+    public MessageController(CreateMessagePort createMessagePort,
+                           GetMessagesPort getMessagesPort,
+                           UpdateMessagePort updateMessagePort,
+                           PublishMessagePort publishMessagePort,
+                           DeleteMessagePort deleteMessagePort) {
+        this.createMessagePort = createMessagePort;
+        this.getMessagesPort = getMessagesPort;
+        this.updateMessagePort = updateMessagePort;
+        this.publishMessagePort = publishMessagePort;
+        this.deleteMessagePort = deleteMessagePort;
     }
 
     @GET
@@ -57,7 +59,7 @@ public class MessageController {
     public List<MessageDto> getAllMessages() {
         LOG.info("GET /api/messages - Retrieving all active messages");
 
-        List<Message> messages = getMessagesUseCase.getAllActive();
+        List<Message> messages = getMessagesPort.getAllActive();
         List<MessageDto> result = messages.stream()
             .map(MessageDto::new)
             .toList();
@@ -74,7 +76,7 @@ public class MessageController {
 
         try {
             MessageStatus messageStatus = MessageStatus.valueOf(status.toUpperCase());
-            List<Message> messages = getMessagesUseCase.getByStatus(messageStatus);
+            List<Message> messages = getMessagesPort.getByStatus(messageStatus);
             return messages.stream()
                 .map(MessageDto::new)
                 .toList();
@@ -89,7 +91,7 @@ public class MessageController {
     public List<MessageDto> getMessagesByAuthor(@PathParam("author") String author) {
         LOG.info("GET /api/messages/author/" + author);
 
-        List<Message> messages = getMessagesUseCase.getByAuthor(author);
+        List<Message> messages = getMessagesPort.getByAuthor(author);
         return messages.stream()
             .map(MessageDto::new)
             .toList();
@@ -102,7 +104,7 @@ public class MessageController {
         LOG.fine("Author: " + request.getAuthor() + ", Content: " + request.getContent());
 
         try {
-            Message message = createMessageUseCase.execute(
+            Message message = createMessagePort.execute(
                 request.getContent().trim(),
                 request.getAuthor().trim()
             );
@@ -128,7 +130,7 @@ public class MessageController {
 
         try {
             MessageId messageId = MessageId.of(id);
-            Message message = updateMessageUseCase.execute(messageId, request.getContent().trim());
+            Message message = updateMessagePort.execute(messageId, request.getContent().trim());
 
             LOG.info("PUT /api/messages/" + id + " - Message updated successfully");
             return new MessageDto(message);
@@ -150,7 +152,7 @@ public class MessageController {
 
         try {
             MessageId messageId = MessageId.of(id);
-            Message message = publishMessageUseCase.execute(messageId);
+            Message message = publishMessagePort.execute(messageId);
 
             LOG.info("POST /api/messages/" + id + "/publish - Message published successfully");
             return new MessageDto(message);
@@ -166,13 +168,13 @@ public class MessageController {
 
     @DELETE
     @Path("/{id}")
-    @Operation(summary = "Logically delete a message")
+    @Operation(summary = "Delete a message")
     public Response deleteMessage(@PathParam("id") String id) {
-        LOG.info("DELETE /api/messages/" + id + " - Logical deletion of message");
+        LOG.info("DELETE /api/messages/" + id + " - Deleting message");
 
         try {
             MessageId messageId = MessageId.of(id);
-            deleteMessageUseCase.execute(messageId);
+            deleteMessagePort.execute(messageId);
 
             LOG.info("DELETE /api/messages/" + id + " - Message deleted successfully");
             return Response.noContent().build();
@@ -180,8 +182,8 @@ public class MessageController {
         } catch (MessageNotFoundException e) {
             LOG.warning("DELETE /api/messages/" + id + " - Message not found");
             throw new NotFoundException(e.getMessage());
-        } catch (IllegalStateException e) {
-            LOG.warning("DELETE /api/messages/" + id + " - Error: " + e.getMessage());
+        } catch (MessageAlreadyDeletedException e) {
+            LOG.warning("DELETE /api/messages/" + id + " - Message already deleted");
             throw new BadRequestException(e.getMessage());
         }
     }
