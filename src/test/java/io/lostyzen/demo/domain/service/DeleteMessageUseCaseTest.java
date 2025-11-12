@@ -1,5 +1,6 @@
 package io.lostyzen.demo.domain.service;
 
+import io.lostyzen.demo.domain.exception.MessageAlreadyDeletedException;
 import io.lostyzen.demo.domain.exception.MessageNotFoundException;
 import io.lostyzen.demo.domain.model.Message;
 import io.lostyzen.demo.domain.model.MessageId;
@@ -140,12 +141,12 @@ class DeleteMessageUseCaseTest {
             when(messageRepository.findById(messageId)).thenReturn(Optional.of(deletedMessage));
 
             // When & Then
-            IllegalStateException exception = assertThrows(
-                IllegalStateException.class,
+            MessageAlreadyDeletedException exception = assertThrows(
+                MessageAlreadyDeletedException.class,
                 () -> deleteMessageUseCase.execute(messageId)
             );
 
-            assertTrue(exception.getMessage().contains("Cannot transition"));
+            assertTrue(exception.getMessage().contains("already deleted"));
             verify(messageRepository).findById(messageId);
             verify(messageRepository, never()).save(any(Message.class));
         }

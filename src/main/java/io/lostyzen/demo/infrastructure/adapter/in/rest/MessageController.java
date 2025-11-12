@@ -6,6 +6,7 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
+import io.lostyzen.demo.domain.exception.MessageAlreadyDeletedException;
 import io.lostyzen.demo.domain.exception.MessageNotFoundException;
 import io.lostyzen.demo.domain.model.Message;
 import io.lostyzen.demo.domain.model.MessageId;
@@ -181,6 +182,9 @@ public class MessageController {
         } catch (MessageNotFoundException e) {
             LOG.warning("DELETE /api/messages/" + id + " - Message not found");
             throw new NotFoundException(e.getMessage());
+        } catch (MessageAlreadyDeletedException e) {
+            LOG.warning("DELETE /api/messages/" + id + " - Message already deleted");
+            throw new BadRequestException(e.getMessage());
         }
     }
 }
